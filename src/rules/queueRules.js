@@ -24,9 +24,9 @@ export const SERVICES_LIST = [
 ];
 
 export const INITIAL_BARBERS = [
-  { id: 'ravi', name: 'Ravi', status: 'busy', onBreak: false, currentToken: 'S-8' },
-  { id: 'amit', name: 'Amit', status: 'free', onBreak: false, currentToken: null },
-  { id: 'imran', name: 'Imran', status: 'on_break', onBreak: true, currentToken: null },
+  { id: 'ravi', name: 'Ravi', status: 'busy', onDuty: true, onBreak: false, currentToken: 'S-8' },
+  { id: 'amit', name: 'Amit', status: 'free', onDuty: true, onBreak: false, currentToken: null },
+  { id: 'imran', name: 'Imran', status: 'on_break', onDuty: true, onBreak: true, currentToken: null },
 ];
 
 // Initial queue: 1 in chair (Ravi with S-8) + 5 waiting (total 100m ahead -> 50 min wait with 2 active barbers)
@@ -49,7 +49,12 @@ export function getQueueState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return JSON.parse(raw);
+      const saved = JSON.parse(raw);
+      return {
+        ...saved,
+        barbers: (saved.barbers || INITIAL_BARBERS).map((barber) => ({ onDuty: true, ...barber })),
+        services: (saved.services || SERVICES_LIST).map((service) => ({ active: true, ...service })),
+      };
     }
   } catch (e) {
     console.error('Failed to read queue state', e);
@@ -142,7 +147,59 @@ export function findActiveSpotByPhone(phone) {
  * Get active barbers count (on floor and not on break)
  */
 export function getActiveBarbersCount(barbers = INITIAL_BARBERS) {
-  return barbers.filter((b) => !b.onBreak).length || 1;
+  return barbers.filter((b) => b.onDuty !== false && !b.onBreak).length || 1;
+}
+
+/** Persist owner changes through the same queue state used by every screen. */
+export function setOnlineQueueOpen(isOpen) {
+  const state = getQueueState();
+  saveQueueState({ ...state, isOnlineQueueOpen: Boolean(isOpen) });
+  return true;
+}
+
+export function setServiceActive(serviceId, active) {
+  const state = getQueueState();
+  if (!state.services.some((service) => service.id === serviceId)) return false;
+  const services = state.services.map((service) =>
+    service.id === serviceId ? { ...service, active: Boolean(active) } : service
+  );
+  saveQueueState({ ...state, services });
+  return true;
+}
+
+export function setBarberOnDuty(barberId, onDuty) {
+  const state = getQueueState();
+  const barber = state.barbers.find((item) => item.id === barberId);
+  if (!barber) return false;
+  if (!onDuty && state.queue.some((spot) =>
+    (spot.barber === barberId || spot.assignedBarber === barberId) &&
+    [QUEUE_STATUS.WAITING, QUEUE_STATUS.CALLED, QUEUE_STATUS.IN_CHAIR].includes(spot.status)
+  )) return false;
+
+  const barbers = state.barbers.map((item) => item.id === barberId
+    ? { ...item, onDuty: Boolean(onDuty), status: onDuty ? (item.onBreak ? 'on_break' : 'free') : 'off_duty' }
+    : item);
+  saveQueueState({ ...state, barbers });
+  return true;
+}
+
+/** Calculate today's owner dashboard metrics from the queue's dated events. */
+export function getTodayStats() {
+  const { queue } = getQueueState();
+  const today = new Date();
+  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const isToday = (timestamp) => Number(timestamp) >= dayStart;
+  const completed = queue.filter((spot) => spot.status === QUEUE_STATUS.DONE && isToday(spot.completedAt || spot.updatedAt));
+  const waits = completed
+    .map((spot) => Math.max(0, Math.round(((spot.calledAt || spot.startedAt || spot.completedAt) - spot.createdAt) / 60000)))
+    .filter(Number.isFinite);
+
+  return {
+    customersServed: completed.length,
+    averageWait: waits.length ? Math.round(waits.reduce((total, wait) => total + wait, 0) / waits.length) : 0,
+    noShows: queue.filter((spot) => spot.status === QUEUE_STATUS.NO_SHOW && isToday(spot.noShowAt || spot.updatedAt)).length,
+    cancellations: queue.filter((spot) => spot.status === QUEUE_STATUS.CANCELLED && isToday(spot.cancelledAt || spot.updatedAt)).length,
+  };
 }
 
 /**
@@ -300,7 +357,7 @@ export function completeServiceForBarber(token, barberId) {
 export function setBarberBreak(barberId, onBreak) {
   const state = getQueueState();
   const barber = state.barbers.find((b) => b.id === barberId);
-  if (!barber) return false;
+  if (!barber || (onBreak && barber.onDuty === false)) return false;
   if (onBreak && state.queue.some((q) =>
     (q.barber === barberId || q.assignedBarber === barberId) &&
     [QUEUE_STATUS.CALLED, QUEUE_STATUS.IN_CHAIR].includes(q.status)
@@ -371,7 +428,7 @@ export function cancelCustomerSpot(token) {
 export function callNextForBarber(barberId) {
   const state = getQueueState();
   const barber = state.barbers.find((b) => b.id === barberId);
-  if (!barber || barber.onBreak) return null;
+  if (!barber || barber.onBreak || barber.onDuty === false) return null;
 
   // Don't assign if barber already has someone In chair
   const alreadyServing = state.queue.find(

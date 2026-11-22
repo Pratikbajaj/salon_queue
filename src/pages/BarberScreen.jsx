@@ -36,6 +36,7 @@ export default function BarberScreen() {
   );
   const next = queueState.queue.find((spot) =>
     spot.status === QUEUE_STATUS.WAITING &&
+    barber?.onDuty !== false &&
     (spot.barber === barberId || (spot.barber === 'any' && !barber?.onBreak))
   );
   const services = (current?.serviceIds || []).map((serviceId) => {
@@ -141,7 +142,7 @@ export default function BarberScreen() {
           <button
             type="button"
             onClick={handleBreakToggle}
-            disabled={!barber || Boolean(current)}
+            disabled={!barber || barber.onDuty === false || Boolean(current)}
             className={`min-h-[48px] px-4 rounded-xl text-sm font-bold border flex items-center gap-2 transition disabled:opacity-40 disabled:cursor-not-allowed ${
               barber?.onBreak
                 ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
@@ -149,7 +150,7 @@ export default function BarberScreen() {
             }`}
           >
             <Coffee className="w-4 h-4" />
-            {barber?.onBreak ? t('toggle_resume_btn') : t('toggle_break_btn')}
+            {barber?.onDuty === false ? t('admin_off_duty') : barber?.onBreak ? t('toggle_resume_btn') : t('toggle_break_btn')}
           </button>
         </div>
 

@@ -93,6 +93,14 @@ Build Barber View (Screen 5) and the Waiting Area TV (Screen 6). Start/Done and 
 **Result:** worked
 **Notes:** Built Barber View (/barber/:name) with Start, Done and the On break toggle, and the Waiting Area TV (/display) with one row per barber and an "Up next" list. The agent chose [write its sync method here, e.g. localStorage with a storage event] to keep windows in sync. I tested with separate browser windows: Call next on Reception showed "It's your turn" on the status page and flashed the token on the TV, Start and Done updated Reception and the TV, and On break showed on Home and Reception. [Add anything that didn't work or took longer than 5 seconds.]
 
+## 6. Owner Settings
+**Prompt:**
+```
+Build Screen 7 (Owner Settings). Turning off a service hides it from Join; closing the queue disables online joining with a clear message. Add today's stats cards and the PIN protection for staff screens.
+```
+**Result:** worked
+**Notes:** Built the Owner Settings screen (/admin) with the services list (on/off toggles), barbers on duty, the Open/Closed queue switch and today's stats cards (customers served, average wait, no-shows, cancellations). Turning a service off hides it from Join, closing the queue disables the Join button with a clear message, and walk-ins still work from Reception. Staff screens (/reception, /barber/:name, /admin) now ask for a PIN, and a wrong PIN is rejected. [Add anything that didn't work.]
+
 ## Fix & iterate prompts
 
 ### Bug 1: Cancel my spot did nothing

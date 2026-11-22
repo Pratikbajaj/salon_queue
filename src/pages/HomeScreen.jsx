@@ -112,9 +112,10 @@ export default function HomeScreen() {
                 >
                   <span className="text-sm font-bold text-gold-light">{b.name}</span>
                   <span className="text-[11px] capitalize mt-0.5">
-                    {b.status === 'busy' && t('status_busy')}
-                    {b.status === 'free' && t('status_free')}
-                    {b.status === 'on_break' && t('status_break')}
+                    {b.onDuty === false && t('status_off_duty')}
+                    {b.onDuty !== false && b.status === 'busy' && t('status_busy')}
+                    {b.onDuty !== false && b.status === 'free' && t('status_free')}
+                    {b.onDuty !== false && b.status === 'on_break' && t('status_break')}
                   </span>
                 </div>
               ))}

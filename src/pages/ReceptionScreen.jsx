@@ -267,6 +267,7 @@ function BarberCard({ barber, queue, onCallNext, t }) {
   const next = queue.find(
     (q) =>
       q.status === QUEUE_STATUS.WAITING &&
+      barber.onDuty !== false &&
       (q.barber === barber.id || (q.barber === 'any' && !barber.onBreak))
   );
 
@@ -292,12 +293,13 @@ function BarberCard({ barber, queue, onCallNext, t }) {
   };
 
   // Can call next?
-  const canCallNext = !barber.onBreak && !inChair && !called;
+  const canCallNext = barber.onDuty !== false && !barber.onBreak && !inChair && !called;
 
   // Status label
   let statusLabel = t('label_free');
   let statusColor = 'text-emerald-400';
-  if (barber.onBreak) { statusLabel = t('label_on_break'); statusColor = 'text-gold-muted'; }
+  if (barber.onDuty === false) { statusLabel = t('admin_off_duty'); statusColor = 'text-gold-muted'; }
+  else if (barber.onBreak) { statusLabel = t('label_on_break'); statusColor = 'text-gold-muted'; }
   else if (inChair) { statusLabel = t('label_serving'); statusColor = 'text-amber-400'; }
   else if (called) { statusLabel = t('label_called_at'); statusColor = 'text-sky-400'; }
 
@@ -561,7 +563,7 @@ function ReceptionDashboard() {
             <div className="w-px h-8 bg-charcoal-light" />
             <div className="text-center">
               <span className="text-2xl font-bold text-emerald-400 font-mono leading-none">
-                {barbers.filter((b) => !b.onBreak).length}
+                {barbers.filter((b) => b.onDuty !== false && !b.onBreak).length}
               </span>
               <p className="text-[10px] text-gold-muted uppercase tracking-wider mt-0.5">{t('col_barbers')}</p>
             </div>

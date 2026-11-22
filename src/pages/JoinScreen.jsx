@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Header from '../components/Header';
 import { useTranslation } from '../i18n/LanguageContext';
 import { Sparkles, Check, AlertCircle, AlertTriangle, ArrowRight, User, Phone } from 'lucide-react';
@@ -16,13 +16,17 @@ export default function JoinScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [queueState] = useState(() => getQueueState());
+  const [queueState, setQueueState] = useState(() => getQueueState());
   const { services, barbers, isOnlineQueueOpen } = queueState;
+  const activeServices = services.filter((service) => service.active !== false);
 
   // Form State
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [selectedServiceIds, setSelectedServiceIds] = useState(['s1']); // default Haircut selected
+  const [selectedServiceIds, setSelectedServiceIds] = useState(() => {
+    const firstActive = queueState.services.find((service) => service.active !== false);
+    return firstActive ? [firstActive.id] : [];
+  });
   const [selectedBarberId, setSelectedBarberId] = useState('any');
 
   // Validation & UI State
@@ -31,6 +35,23 @@ export default function JoinScreen() {
   const [formError, setFormError] = useState('');
   const [serviceLimitWarning, setServiceLimitWarning] = useState('');
   const [activeSpotNotice, setActiveSpotNotice] = useState('');
+
+  useEffect(() => {
+    const refreshSettings = () => {
+      const nextState = getQueueState();
+      setQueueState(nextState);
+      const activeIds = new Set(nextState.services.filter((service) => service.active !== false).map((service) => service.id));
+      setSelectedServiceIds((current) => current.filter((serviceId) => activeIds.has(serviceId)));
+    };
+    window.addEventListener('salon_queue_updated', refreshSettings);
+    window.addEventListener('storage', refreshSettings);
+    const intervalId = window.setInterval(refreshSettings, 3000);
+    return () => {
+      window.removeEventListener('salon_queue_updated', refreshSettings);
+      window.removeEventListener('storage', refreshSettings);
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   // Inline Phone Validation
   const isPhoneValid = useMemo(() => validatePhone(phone), [phone]);
@@ -75,8 +96,8 @@ export default function JoinScreen() {
 
   // Selected Services calculations
   const selectedServices = useMemo(() => {
-    return services.filter((s) => selectedServiceIds.includes(s.id));
-  }, [services, selectedServiceIds]);
+    return activeServices.filter((s) => selectedServiceIds.includes(s.id));
+  }, [activeServices, selectedServiceIds]);
 
   const totalDuration = useMemo(() => {
     return selectedServices.reduce((acc, s) => acc + s.duration, 0);
@@ -110,8 +131,10 @@ export default function JoinScreen() {
     setFormError('');
     setServiceLimitWarning('');
     setActiveSpotNotice('');
+    const latestState = getQueueState();
+    setQueueState(latestState);
 
-    if (!isOnlineQueueOpen) {
+    if (!latestState.isOnlineQueueOpen) {
       setFormError(t('err_queue_closed'));
       return;
     }
@@ -130,6 +153,18 @@ export default function JoinScreen() {
 
     if (selectedServiceIds.length === 0) {
       setFormError(t('err_no_service'));
+      return;
+    }
+
+    const availableServiceIds = new Set(latestState.services.filter((service) => service.active !== false).map((service) => service.id));
+    if (selectedServiceIds.some((serviceId) => !availableServiceIds.has(serviceId))) {
+      setSelectedServiceIds((current) => current.filter((serviceId) => availableServiceIds.has(serviceId)));
+      setFormError(t('err_service_unavailable'));
+      return;
+    }
+
+    if (selectedBarberId !== 'any' && !latestState.barbers.some((barber) => barber.id === selectedBarberId && barber.onDuty !== false)) {
+      setFormError(t('err_barber_off_duty'));
       return;
     }
 
@@ -179,6 +214,13 @@ export default function JoinScreen() {
           <div className="bg-gold/15 border border-gold p-4 rounded-2xl flex items-center gap-3 text-xs text-gold-light font-semibold animate-pulse">
             <Sparkles className="w-5 h-5 text-gold shrink-0" />
             <span>{activeSpotNotice}</span>
+          </div>
+        )}
+
+        {!isOnlineQueueOpen && (
+          <div className="bg-red-500/10 border border-red-500/40 p-3.5 rounded-2xl text-sm text-red-200" role="status">
+            <p className="font-bold">{t('err_queue_closed')}</p>
+            <p className="text-xs mt-1 text-red-200/80">{t('admin_queue_closed_note')}</p>
           </div>
         )}
 
@@ -267,7 +309,7 @@ export default function JoinScreen() {
           )}
 
           <div className="space-y-2">
-            {services.map((service) => {
+            {activeServices.map((service) => {
               const isSelected = selectedServiceIds.includes(service.id);
               const displayName = t(service.key) || service.name;
 
@@ -336,19 +378,23 @@ export default function JoinScreen() {
             {/* Individual Barbers: Ravi, Amit, Imran */}
             {barbers.map((b) => {
               const isSelected = selectedBarberId === b.id;
+              const isOffDuty = b.onDuty === false;
               return (
                 <button
                   type="button"
                   key={b.id}
+                  disabled={isOffDuty}
                   onClick={() => setSelectedBarberId(b.id)}
-                  className={`min-h-[48px] p-3 rounded-xl border text-left transition cursor-pointer active:scale-[0.99] ${
+                  className={`min-h-[48px] p-3 rounded-xl border text-left transition cursor-pointer active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed ${
                     isSelected
                       ? 'bg-gold/15 border-gold text-gold-light shadow-sm'
                       : 'bg-charcoal-card border-charcoal-light text-gold-light hover:border-gold/50'
                   }`}
                 >
                   <div className="text-sm font-semibold">{b.name}</div>
-                  {b.onBreak ? (
+                  {isOffDuty ? (
+                    <span className="text-[10px] text-gold-muted mt-0.5 block">{t('status_off_duty')}</span>
+                  ) : b.onBreak ? (
                     <div className="flex items-center gap-1 text-[10px] text-amber-400 mt-0.5">
                       <AlertCircle className="w-3 h-3" />
                       <span>{t('status_break')}</span>

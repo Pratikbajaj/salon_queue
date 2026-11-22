@@ -1,82 +1,102 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Header from '../components/Header';
 import { useTranslation } from '../i18n/LanguageContext';
-import { STAFF_PIN } from '../rules/queueRules';
-import { Settings, Users, Scissors, ToggleLeft, ToggleRight, Check, Lock, BarChart3 } from 'lucide-react';
+import {
+  STAFF_PIN,
+  getQueueState,
+  getTodayStats,
+  setBarberOnDuty,
+  setOnlineQueueOpen,
+  setServiceActive,
+} from '../rules/queueRules';
+import { BarChart3, Check, Lock, Scissors, ToggleLeft, ToggleRight, Users } from 'lucide-react';
 
 export default function AdminScreen() {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const [pin, setPin] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinError, setPinError] = useState(false);
+  const [queueState, setQueueState] = useState(() => getQueueState());
+  const [stats, setStats] = useState(() => getTodayStats());
+  const [actionError, setActionError] = useState('');
 
-  // Demo admin settings state
-  const [onlineQueueOpen, setOnlineQueueOpen] = useState(true);
-  const [barbersOnDuty, setBarbersOnDuty] = useState({
-    Ravi: true,
-    Amit: true,
-    Imran: true,
-  });
+  const reload = useCallback(() => {
+    setQueueState(getQueueState());
+    setStats(getTodayStats());
+  }, []);
 
-  const [services, setServices] = useState([
-    { id: '1', nameEn: 'Haircut', nameHi: 'हेयरकट', min: 30, price: 150, active: true },
-    { id: '2', nameEn: 'Beard trim', nameHi: 'दाढ़ी ट्रिम', min: 15, price: 80, active: true },
-    { id: '3', nameEn: 'Hair spa', nameHi: 'हेयर स्पा', min: 45, price: 400, active: true },
-    { id: '4', nameEn: 'Shave', nameHi: 'शेव', min: 15, price: 60, active: true },
-    { id: '5', nameEn: 'Head massage', nameHi: 'हेड मसाज', min: 20, price: 120, active: true },
-  ]);
+  useEffect(() => {
+    window.addEventListener('salon_queue_updated', reload);
+    window.addEventListener('storage', reload);
+    const intervalId = window.setInterval(reload, 3000);
+    return () => {
+      window.removeEventListener('salon_queue_updated', reload);
+      window.removeEventListener('storage', reload);
+      window.clearInterval(intervalId);
+    };
+  }, [reload]);
 
-  const handlePinSubmit = (e) => {
-    e.preventDefault();
+  const handlePinSubmit = (event) => {
+    event.preventDefault();
     if (pin === STAFF_PIN) {
       setIsAuthenticated(true);
       setPinError(false);
+      setPin('');
     } else {
       setPinError(true);
+      setPin('');
     }
   };
 
-  const toggleBarber = (bName) => {
-    setBarbersOnDuty(prev => ({ ...prev, [bName]: !prev[bName] }));
+  const toggleQueue = () => {
+    setOnlineQueueOpen(!queueState.isOnlineQueueOpen);
+    setActionError('');
+    reload();
   };
 
-  const toggleService = (id) => {
-    setServices(prev =>
-      prev.map(s => (s.id === id ? { ...s, active: !s.active } : s))
-    );
+  const toggleService = (service) => {
+    if (!setServiceActive(service.id, !service.active)) {
+      setActionError(t('admin_save_error'));
+      return;
+    }
+    setActionError('');
+    reload();
+  };
+
+  const toggleBarber = (barber) => {
+    if (!setBarberOnDuty(barber.id, !barber.onDuty)) {
+      setActionError(t('admin_barber_busy'));
+      return;
+    }
+    setActionError('');
+    reload();
   };
 
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-charcoal-dark flex flex-col">
-        <Header title={t('admin_title')} showBack={true} backTo="/" />
+        <Header title={t('admin_title')} showBack backTo="/" />
         <main className="flex-1 flex items-center justify-center p-4">
-          <form
-            onSubmit={handlePinSubmit}
-            className="bg-charcoal-card border border-charcoal-light rounded-3xl p-6 max-w-sm w-full space-y-4 text-center shadow-xl"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/30 text-gold flex items-center justify-center mx-auto">
-              <Lock className="w-6 h-6" />
+          <form onSubmit={handlePinSubmit} className="bg-charcoal-card border border-charcoal-light rounded-3xl p-7 max-w-sm w-full space-y-5 text-center shadow-2xl">
+            <div className="w-14 h-14 rounded-2xl bg-gold/10 border border-gold/30 text-gold flex items-center justify-center mx-auto">
+              <Lock className="w-7 h-7" />
             </div>
-            <h2 className="text-lg font-bold text-gold-light">{t('pin_required')}</h2>
-            <p className="text-xs text-gold-muted">{t('demo_pin_hint')}</p>
-
+            <div>
+              <h2 className="text-xl font-bold text-gold-light">{t('pin_required')}</h2>
+              <p className="text-sm text-gold-muted mt-1">{t('demo_pin_hint')}</p>
+            </div>
             <input
               type="password"
+              inputMode="numeric"
               maxLength={4}
               value={pin}
-              onChange={(e) => setPin(e.target.value)}
+              onChange={(event) => { setPin(event.target.value.replace(/\D/g, '')); setPinError(false); }}
               placeholder="••••"
-              className="w-full min-h-[48px] px-4 py-2 text-center text-2xl tracking-widest bg-charcoal border border-charcoal-light rounded-xl text-gold focus:outline-none focus:border-gold font-mono"
+              aria-label={t('enter_pin')}
+              className="w-full min-h-[52px] px-4 py-2 text-center text-3xl tracking-[0.5em] bg-charcoal border border-charcoal-light rounded-xl text-gold focus:outline-none focus:border-gold font-mono"
             />
-            {pinError && (
-              <p className="text-xs text-red-400">{t('invalid_pin')}</p>
-            )}
-
-            <button
-              type="submit"
-              className="w-full min-h-[44px] bg-gold hover:bg-gold-dark text-charcoal-dark font-bold text-sm rounded-xl transition cursor-pointer"
-            >
+            {pinError && <p className="text-sm text-red-400">{t('invalid_pin')}</p>}
+            <button type="submit" className="w-full min-h-[48px] bg-gold hover:bg-gold-dark text-charcoal-dark font-bold rounded-xl transition">
               {t('submit')}
             </button>
           </form>
@@ -85,131 +105,128 @@ export default function AdminScreen() {
     );
   }
 
+  const statCards = [
+    { key: 'stat_customers_served', value: stats.customersServed, color: 'text-gold-light' },
+    { key: 'stat_avg_wait', value: `${stats.averageWait} ${t('min')}`, color: 'text-gold' },
+    { key: 'stat_no_shows', value: stats.noShows, color: 'text-amber-400' },
+    { key: 'stat_cancellations', value: stats.cancellations, color: 'text-red-400' },
+  ];
+
   return (
     <div className="min-h-screen bg-charcoal-dark flex flex-col">
-      <Header title={t('admin_title')} showBack={true} backTo="/" />
-
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <Header title={t('admin_title')} showBack backTo="/" />
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 space-y-6">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-gold-light">{t('admin_title')}</h2>
-            <p className="text-xs text-gold-muted">Configure salon operations, services, and view metrics</p>
+            <h2 className="text-2xl font-black text-gold-light">{t('admin_title')}</h2>
+            <p className="text-sm text-gold-muted mt-1">{t('admin_settings_intro')}</p>
           </div>
-          <span className="text-xs font-mono px-3 py-1 bg-gold/10 text-gold border border-gold/30 rounded-md">
-            Screen 7 · Tablet/Desktop
-          </span>
+          <span className="text-xs font-mono px-3 py-2 bg-gold/10 text-gold border border-gold/30 rounded-lg">{t('admin_screen_label')}</span>
         </div>
 
-        {/* Stats Cards */}
-        <div className="space-y-3">
+        {actionError && (
+          <div role="status" className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200 text-sm">
+            {actionError}
+          </div>
+        )}
+
+        <section className="space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gold-muted flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-gold" />
-            {t('admin_stats_title')}
+            <BarChart3 className="w-4 h-4 text-gold" /> {t('admin_stats_title')}
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-charcoal-card border border-charcoal-light rounded-2xl p-4 shadow">
-              <span className="text-xs text-gold-muted">{t('stat_customers_served')}</span>
-              <div className="text-2xl font-black text-gold-light mt-1">28</div>
-            </div>
-            <div className="bg-charcoal-card border border-charcoal-light rounded-2xl p-4 shadow">
-              <span className="text-xs text-gold-muted">{t('stat_avg_wait')}</span>
-              <div className="text-2xl font-black text-gold mt-1">22 min</div>
-            </div>
-            <div className="bg-charcoal-card border border-charcoal-light rounded-2xl p-4 shadow">
-              <span className="text-xs text-gold-muted">{t('stat_no_shows')}</span>
-              <div className="text-2xl font-black text-amber-400 mt-1">2</div>
-            </div>
-            <div className="bg-charcoal-card border border-charcoal-light rounded-2xl p-4 shadow">
-              <span className="text-xs text-gold-muted">{t('stat_cancellations')}</span>
-              <div className="text-2xl font-black text-red-400 mt-1">1</div>
-            </div>
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+            {statCards.map((stat) => (
+              <article key={stat.key} className="bg-charcoal-card border border-charcoal-light rounded-2xl p-4 sm:p-5 shadow">
+                <p className="text-xs sm:text-sm text-gold-muted">{t(stat.key)}</p>
+                <p className={`text-2xl sm:text-3xl font-black mt-2 ${stat.color}`}>{stat.value}</p>
+              </article>
+            ))}
           </div>
-        </div>
+        </section>
 
-        {/* Online Queue Control */}
-        <div className="bg-charcoal-card border border-charcoal-light rounded-2xl p-5 shadow space-y-3">
-          <div className="flex items-center justify-between">
+        <section className="bg-charcoal-card border border-charcoal-light rounded-2xl p-4 sm:p-5 shadow space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-bold text-gold-light">{t('admin_queue_control')}</h3>
-              <p className="text-xs text-gold-muted">{t('admin_online_joining')}</p>
+              <h3 className="text-base font-bold text-gold-light">{t('admin_queue_control')}</h3>
+              <p className="text-sm text-gold-muted mt-1">{t('admin_online_joining')}</p>
             </div>
             <button
               type="button"
-              onClick={() => setOnlineQueueOpen(!onlineQueueOpen)}
-              className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition ${
-                onlineQueueOpen
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                  : 'bg-red-500/10 text-red-400 border border-red-500/30'
+              role="switch"
+              aria-checked={queueState.isOnlineQueueOpen}
+              onClick={toggleQueue}
+              className={`min-h-[48px] px-4 rounded-xl text-sm font-bold flex items-center gap-2 border transition ${
+                queueState.isOnlineQueueOpen
+                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                  : 'bg-red-500/10 text-red-300 border-red-500/30'
               }`}
             >
-              {onlineQueueOpen ? <ToggleRight className="w-5 h-5 text-emerald-400" /> : <ToggleLeft className="w-5 h-5 text-red-400" />}
-              <span>{onlineQueueOpen ? 'Online Queue: OPEN' : 'Online Queue: CLOSED'}</span>
+              {queueState.isOnlineQueueOpen ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+              {queueState.isOnlineQueueOpen ? t('admin_queue_open') : t('admin_queue_closed')}
             </button>
           </div>
-        </div>
+          <p className={`text-sm rounded-xl px-3 py-2 ${queueState.isOnlineQueueOpen ? 'bg-emerald-500/5 text-emerald-200' : 'bg-red-500/10 text-red-200'}`}>
+            {queueState.isOnlineQueueOpen ? t('admin_queue_open_note') : t('admin_queue_closed_note')}
+          </p>
+        </section>
 
-        {/* Barbers on Duty */}
-        <div className="bg-charcoal-card border border-charcoal-light rounded-2xl p-5 shadow space-y-3">
-          <h3 className="text-sm font-bold text-gold-light flex items-center gap-2">
-            <Users className="w-4 h-4 text-gold" />
-            {t('admin_barbers_duty')}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {Object.keys(barbersOnDuty).map((b) => (
-              <button
-                key={b}
-                type="button"
-                onClick={() => toggleBarber(b)}
-                className={`min-h-[44px] p-3 rounded-xl border flex items-center justify-between transition ${
-                  barbersOnDuty[b]
-                    ? 'bg-gold/15 border-gold text-gold-light font-semibold'
-                    : 'bg-charcoal border-charcoal-light text-gold-muted'
-                }`}
-              >
-                <span className="font-semibold text-sm">{b}</span>
-                <span className={`text-xs px-2 py-0.5 rounded ${
-                  barbersOnDuty[b] ? 'bg-emerald-500/10 text-emerald-400' : 'bg-charcoal text-gold-muted'
-                }`}>
-                  {barbersOnDuty[b] ? 'On Duty' : 'Off'}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Services Management */}
-        <div className="bg-charcoal-card border border-charcoal-light rounded-2xl p-5 shadow space-y-3">
-          <h3 className="text-sm font-bold text-gold-light flex items-center gap-2">
-            <Scissors className="w-4 h-4 text-gold" />
-            {t('admin_services_mgmt')}
-          </h3>
-          <div className="divide-y divide-charcoal-light">
-            {services.map((s) => (
-              <div key={s.id} className="py-3 flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-sm font-semibold text-gold-light">
-                    {language === 'hi' ? s.nameHi : s.nameEn}
-                    <span className="text-xs text-gold-muted ml-2">({s.nameEn} / {s.nameHi})</span>
-                  </div>
-                  <div className="text-xs text-gold-muted">
-                    {s.min} {t('min')} · ₹{s.price}
-                  </div>
-                </div>
-
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <section className="bg-charcoal-card border border-charcoal-light rounded-2xl p-4 sm:p-5 shadow space-y-3">
+            <h3 className="text-base font-bold text-gold-light flex items-center gap-2">
+              <Users className="w-4 h-4 text-gold" /> {t('admin_barbers_duty')}
+            </h3>
+            <div className="space-y-2">
+              {queueState.barbers.map((barber) => (
                 <button
+                  key={barber.id}
                   type="button"
-                  onClick={() => toggleService(s.id)}
-                  className={`min-h-[44px] px-3.5 py-1.5 rounded-xl text-xs font-bold border transition ${
-                    s.active
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                      : 'bg-charcoal text-gold-muted border-charcoal-light'
+                  role="switch"
+                  aria-checked={barber.onDuty !== false}
+                  onClick={() => toggleBarber(barber)}
+                  className={`w-full min-h-[48px] p-3 rounded-xl border flex items-center justify-between gap-3 transition ${
+                    barber.onDuty !== false
+                      ? 'bg-gold/10 border-gold/30 text-gold-light'
+                      : 'bg-charcoal border-charcoal-light text-gold-muted'
                   }`}
                 >
-                  {s.active ? 'Active' : 'Disabled'}
+                  <span className="font-semibold text-sm">{barber.name}</span>
+                  <span className="flex items-center gap-2 text-xs">
+                    {barber.onDuty !== false ? t('admin_on_duty') : t('admin_off_duty')}
+                    {barber.onDuty !== false ? <Check className="w-4 h-4 text-emerald-400" /> : <ToggleLeft className="w-5 h-5" />}
+                  </span>
                 </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="bg-charcoal-card border border-charcoal-light rounded-2xl p-4 sm:p-5 shadow space-y-3">
+            <h3 className="text-base font-bold text-gold-light flex items-center gap-2">
+              <Scissors className="w-4 h-4 text-gold" /> {t('admin_services_mgmt')}
+            </h3>
+            <div className="divide-y divide-charcoal-light">
+              {queueState.services.map((service) => (
+                <div key={service.id} className="py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-gold-light truncate">{t(service.key) || service.name}</div>
+                    <div className="text-xs text-gold-muted mt-1">{service.duration} {t('min')} · ₹{service.price}</div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={service.active !== false}
+                    onClick={() => toggleService(service)}
+                    className={`min-h-[44px] shrink-0 px-3.5 rounded-xl text-xs font-bold border transition ${
+                      service.active !== false
+                        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                        : 'bg-charcoal text-gold-muted border-charcoal-light'
+                    }`}
+                  >
+                    {service.active !== false ? t('admin_service_active') : t('admin_service_disabled')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       </main>
     </div>
