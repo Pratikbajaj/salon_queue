@@ -7,6 +7,7 @@ export const translations = {
     // Common
     language_en: "EN",
     language_hi: "हिं",
+    language_toggle: "Toggle language between English and Hindi",
     open_badge: "Open · Closes 9 PM",
     closed_badge: "Queue closed",
     back: "Back",
@@ -28,6 +29,8 @@ export const translations = {
     home_badge_closed: "Queue Closed",
     home_waiting_summary: "{count} people waiting · about {min} min",
     home_empty: "No one waiting — walk right in!",
+    home_live_status: "Live Queue Status",
+    home_wait_suffix: "wait",
     home_join_button: "Join Queue",
     home_join_closed_notice: "Online joining is currently closed. Walk-ins are still accepted at reception.",
     home_barbers_title: "Barbers on Duty",
@@ -47,6 +50,7 @@ export const translations = {
     max_services_error: "Maximum 3 services can be selected",
     select_barber: "Choose Barber",
     any_barber: "Any barber (fastest)",
+    join_fastest: "Fastest",
     barber_break_warning: "{name} is currently on break. You may still select them, but wait time may be longer.",
     live_summary_bar: "Total: {duration} min · ₹{price} · Expected wait ~{wait} min",
     btn_confirm: "Confirm & Get Token",
@@ -66,6 +70,7 @@ export const translations = {
 
     // Screen 3: My Status
     status_screen_title: "My Status",
+    status_screen_label: "Screen 3 · Phone",
     your_token: "Your Token",
     position_prefix: "Position in queue",
     position_suffix: "in line",
@@ -91,6 +96,17 @@ export const translations = {
     state_noshow_title: "Marked as No-Show",
     state_noshow_desc: "You were called but didn't arrive in time.",
     btn_join_again: "Join Again",
+    status_here_button: "I'm Here — Take My Seat",
+    status_overview_button: "Back to Status Overview",
+    status_test_toggle_show: "Test States & Triggers (Demo)",
+    status_test_toggle_hide: "Hide Test Simulation Bar",
+    status_test_trigger_label: "Simulate Spot Trigger:",
+    status_test_sixth: "6th in line (Default)",
+    status_test_second: "2nd in line (Start coming)",
+    status_test_called: "Called (It's your turn!)",
+    status_test_chair: "In Chair",
+    status_test_done: "Done (Final state)",
+    status_test_cancelled: "Cancelled (Final state)",
 
     // Screen 4: Reception
     reception_title: "Reception Dashboard",
@@ -183,6 +199,8 @@ export const translations = {
 
     // Navigation helper (for dev review)
     nav_all_screens: "Screens",
+    nav_screen_count: "{count} screens",
+    nav_toggle: "Toggle screens navigation",
   },
   hi: {
     // Brand
@@ -192,6 +210,7 @@ export const translations = {
     // Common
     language_en: "EN",
     language_hi: "हिं",
+    language_toggle: "अंग्रेज़ी और हिंदी के बीच भाषा बदलें",
     open_badge: "खुला है · रात 9 बजे बंद होगा",
     closed_badge: "कतार बंद है",
     back: "वापस",
@@ -213,6 +232,8 @@ export const translations = {
     home_badge_closed: "कतार बंद है",
     home_waiting_summary: "{count} लोग प्रतीक्षा में हैं · लगभग {min} मिनट",
     home_empty: "कोई प्रतीक्षा में नहीं है — सीधे अंदर आएं!",
+    home_live_status: "लाइव कतार स्थिति",
+    home_wait_suffix: "प्रतीक्षा",
     home_join_button: "कतार में शामिल हों",
     home_join_closed_notice: "ऑनलाइन कतार अभी बंद है। रिसेप्शन पर वॉक-इन स्वीकार किए जा रहे हैं।",
     home_barbers_title: "ड्यूटी पर बार्बर्स",
@@ -232,6 +253,7 @@ export const translations = {
     max_services_error: "अधिकतम 3 सेवाएं ही चुनी जा सकती हैं",
     select_barber: "बार्बर चुनें",
     any_barber: "कोई भी बार्बर (सबसे तेज़)",
+    join_fastest: "सबसे तेज़",
     barber_break_warning: "{name} अभी ब्रेक पर हैं। आप उन्हें चुन सकते हैं, लेकिन प्रतीक्षा समय अधिक हो सकता है।",
     live_summary_bar: "कुल: {duration} मिनट · ₹{price} · अनुमानित प्रतीक्षा ~{wait} मिनट",
     btn_confirm: "पुष्टि करें और टोकन प्राप्त करें",
@@ -251,6 +273,7 @@ export const translations = {
 
     // Screen 3: My Status
     status_screen_title: "मेरी स्थिति",
+    status_screen_label: "स्क्रीन 3 · फ़ोन",
     your_token: "आपका टोकन",
     position_prefix: "कतार में स्थान",
     position_suffix: "स्थान पर",
@@ -276,6 +299,17 @@ export const translations = {
     state_noshow_title: "अनुपस्थित (No-Show) चिह्नित",
     state_noshow_desc: "आपको बुलाया गया था लेकिन आप समय पर नहीं पहुंचे।",
     btn_join_again: "फिर से शामिल हों",
+    status_here_button: "मैं आ गया/गई — मेरी कुर्सी तैयार करें",
+    status_overview_button: "स्थिति पर वापस जाएं",
+    status_test_toggle_show: "टेस्ट स्थितियां और ट्रिगर (डेमो)",
+    status_test_toggle_hide: "टेस्ट सिमुलेशन बार छिपाएं",
+    status_test_trigger_label: "कतार की स्थिति दिखाएं:",
+    status_test_sixth: "कतार में छठा (डिफ़ॉल्ट)",
+    status_test_second: "कतार में दूसरा (आना शुरू करें)",
+    status_test_called: "बुलाया गया (आपकी बारी!)",
+    status_test_chair: "कुर्सी पर",
+    status_test_done: "पूरा (अंतिम स्थिति)",
+    status_test_cancelled: "रद्द (अंतिम स्थिति)",
 
     // Screen 4: Reception
     reception_title: "रिसेप्शन डैशबोर्ड",
@@ -368,5 +402,7 @@ export const translations = {
 
     // Navigation helper (for dev review)
     nav_all_screens: "स्क्रीन सूची",
+    nav_screen_count: "{count} स्क्रीन",
+    nav_toggle: "स्क्रीन नेविगेशन खोलें या बंद करें",
   }
 };

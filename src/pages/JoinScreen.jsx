@@ -199,7 +199,6 @@ export default function JoinScreen() {
       <main className="flex-1 max-w-md w-full mx-auto px-4 py-6 pb-36 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gold-light">{t('join_title')}</h2>
-          <span className="text-xs text-gold-muted font-mono">Screen 2 · Phone</span>
         </div>
 
         {/* Global Error Banner */}
@@ -373,7 +372,7 @@ export default function JoinScreen() {
               }`}
             >
               <div className="text-sm font-semibold">{t('any_barber')}</div>
-              <span className="text-[10px] text-emerald-400 font-medium">⚡ Fastest</span>
+              <span className="text-[10px] text-emerald-400 font-medium">⚡ {t('join_fastest')}</span>
             </button>
 
             {/* Individual Barbers: Ravi, Amit, Imran */}
@@ -424,7 +423,7 @@ export default function JoinScreen() {
         <div className="max-w-md mx-auto space-y-3">
           {/* Live Summary */}
           <div className="flex items-center justify-between text-xs text-gold-light px-1 font-medium">
-            <span>
+            <span className="block leading-relaxed break-words">
               {t('live_summary_bar', {
                 duration: totalDuration,
                 price: totalPrice,

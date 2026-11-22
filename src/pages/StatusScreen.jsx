@@ -132,13 +132,13 @@ export default function StatusScreen() {
               onClick={() => handleSimulate({ status: QUEUE_STATUS.IN_CHAIR, position: 0 })}
               className="w-full min-h-[48px] px-6 py-3 bg-charcoal-dark text-gold font-bold text-sm rounded-xl hover:bg-charcoal transition shadow-xl cursor-pointer"
             >
-              I'm Here — Take My Seat
+              {t('status_here_button')}
             </button>
             <button
               onClick={() => handleSimulate(null)}
               className="w-full text-xs text-charcoal-dark/70 underline py-1 hover:text-charcoal-dark cursor-pointer"
             >
-              Back to Status Overview
+              {t('status_overview_button')}
             </button>
           </div>
         </div>
@@ -148,7 +148,6 @@ export default function StatusScreen() {
       <main className="flex-1 max-w-md w-full mx-auto px-4 py-6 pb-28 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gold-light">{t('status_screen_title')}</h2>
-          <span className="text-xs text-gold-muted font-mono">Screen 3 · Phone</span>
         </div>
 
         {/* ================= FINAL STATE: CANCELLED ================= */}
@@ -376,50 +375,50 @@ export default function StatusScreen() {
             className="flex items-center gap-1.5 text-[11px] text-gold-muted hover:text-gold transition mx-auto cursor-pointer"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>{showDevControls ? 'Hide Test Simulation Bar' : 'Test States & Triggers (Demo)'}</span>
+            <span>{showDevControls ? t('status_test_toggle_hide') : t('status_test_toggle_show')}</span>
           </button>
 
           {showDevControls && (
             <div className="mt-3 p-3 bg-charcoal-card border border-charcoal-light rounded-2xl space-y-2 text-xs">
               <span className="text-[10px] uppercase font-bold text-gold-muted block">
-                Simulate Spot Trigger:
+                {t('status_test_trigger_label')}
               </span>
               <div className="grid grid-cols-2 gap-1.5">
                 <button
                   onClick={() => handleSimulate({ status: QUEUE_STATUS.WAITING, position: 6, estimatedWaitMin: 50 })}
                   className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-gold-light text-left"
                 >
-                  6th in line (Default)
+                  {t('status_test_sixth')}
                 </button>
                 <button
                   onClick={() => handleSimulate({ status: QUEUE_STATUS.WAITING, position: 2, estimatedWaitMin: 15 })}
                   className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-gold-light text-left"
                 >
-                  2nd in line (Start coming)
+                  {t('status_test_second')}
                 </button>
                 <button
                   onClick={() => handleSimulate({ status: QUEUE_STATUS.CALLED, position: 1, estimatedWaitMin: 0, assignedBarber: 'Amit' })}
                   className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-gold font-bold text-left"
                 >
-                  Called (It's your turn!)
+                  {t('status_test_called')}
                 </button>
                 <button
                   onClick={() => handleSimulate({ status: QUEUE_STATUS.IN_CHAIR, position: 0, estimatedWaitMin: 0 })}
                   className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-emerald-400 text-left"
                 >
-                  In Chair
+                  {t('status_test_chair')}
                 </button>
                 <button
                   onClick={() => handleSimulate({ status: QUEUE_STATUS.DONE })}
                   className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-emerald-400 text-left"
                 >
-                  Done (Final state)
+                  {t('status_test_done')}
                 </button>
                 <button
                   onClick={() => handleSimulate({ status: QUEUE_STATUS.CANCELLED })}
                   className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-red-400 text-left"
                 >
-                  Cancelled (Final state)
+                  {t('status_test_cancelled')}
                 </button>
               </div>
             </div>

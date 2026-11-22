@@ -59,7 +59,6 @@ export default function HomeScreen() {
               ></span>
               {isOpen ? t('home_badge_open') : t('home_badge_closed')}
             </span>
-            <span className="text-xs text-gold-muted font-mono">Screen 1 · Phone</span>
           </div>
 
           {/* Live Queue Status Card */}
@@ -68,12 +67,12 @@ export default function HomeScreen() {
 
             <div className="flex items-center gap-2 text-gold text-xs font-bold uppercase tracking-wider mb-2">
               <Sparkles className="w-4 h-4" />
-              <span>Live Queue Status</span>
+              <span>{t('home_live_status')}</span>
             </div>
 
             {waitingCount > 0 ? (
               <div>
-                <h2 className="text-2xl font-bold text-gold-light mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-gold-light mb-2 break-words">
                   {t('home_waiting_summary', { count: waitingCount, min: estimatedWaitMin })}
                 </h2>
                 <div className="flex items-center gap-4 text-sm text-gold-light mt-4 pt-4 border-t border-charcoal-light">
@@ -83,7 +82,7 @@ export default function HomeScreen() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gold" />
-                    <span>~{estimatedWaitMin} {t('min')} wait</span>
+                    <span>~{estimatedWaitMin} {t('min')} {t('home_wait_suffix')}</span>
                   </div>
                 </div>
               </div>
