@@ -85,6 +85,14 @@ Build the Reception Dashboard (Screen 4) for a 10-inch tablet in landscape. Cust
 **Result:** worked
 **Notes:** Reception screen built with barber cards, waiting list, Call next, No-show, Cancel and Add walk-in. Customers who join on /join appear on /reception automatically. I tried the agent's 3 barber-preference scenarios by hand (Call next for Amit skips a customer who chose Ravi, and so on) and they behaved correctly. I fixed a small UI issue myself: the Add Walk-in button had two "+" signs, so I removed the extra one from the label text.
 
+## 5. Barber View + TV
+**Prompt:**
+```
+Build Barber View (Screen 5) and the Waiting Area TV (Screen 6). Start/Done and On break must update Reception, TV and the customer's phone within 5 seconds. Pick the simplest way to keep windows in sync and explain your choice in 3 lines.
+```
+**Result:** worked
+**Notes:** Built Barber View (/barber/:name) with Start, Done and the On break toggle, and the Waiting Area TV (/display) with one row per barber and an "Up next" list. The agent chose [write its sync method here, e.g. localStorage with a storage event] to keep windows in sync. I tested with separate browser windows: Call next on Reception showed "It's your turn" on the status page and flashed the token on the TV, Start and Done updated Reception and the TV, and On break showed on Home and Reception. [Add anything that didn't work or took longer than 5 seconds.]
+
 ## Fix & iterate prompts
 
 ### Bug 1: Cancel my spot did nothing

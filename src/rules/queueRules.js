@@ -257,6 +257,62 @@ export function updateSpotStatus(token, newStatus, assignedBarber = null) {
   return true;
 }
 
+/** Start a Called customer's service for their assigned barber. */
+export function startServiceForBarber(token, barberId) {
+  const state = getQueueState();
+  const normalized = (token || '').toUpperCase().trim();
+  const spot = state.queue.find((q) => q.token.toUpperCase() === normalized);
+  const barber = state.barbers.find((b) => b.id === barberId);
+  if (!spot || !barber || barber.onBreak || spot.status !== QUEUE_STATUS.CALLED) return false;
+  if ((spot.assignedBarber || spot.barber) !== barberId) return false;
+  if (state.queue.some((q) => q.status === QUEUE_STATUS.IN_CHAIR && q.token !== spot.token && (q.barber === barberId || q.assignedBarber === barberId))) return false;
+
+  const now = Date.now();
+  const queue = state.queue.map((q) => q.token === spot.token
+    ? { ...q, status: QUEUE_STATUS.IN_CHAIR, startedAt: now, updatedAt: now }
+    : q);
+  const barbers = state.barbers.map((b) => b.id === barberId
+    ? { ...b, status: 'busy', currentToken: spot.token }
+    : b);
+  saveQueueState({ ...state, queue, barbers });
+  return true;
+}
+
+/** Complete the service in the chair and release the barber. */
+export function completeServiceForBarber(token, barberId) {
+  const state = getQueueState();
+  const normalized = (token || '').toUpperCase().trim();
+  const spot = state.queue.find((q) => q.token.toUpperCase() === normalized);
+  if (!spot || spot.status !== QUEUE_STATUS.IN_CHAIR || (spot.assignedBarber || spot.barber) !== barberId) return false;
+
+  const now = Date.now();
+  const queue = state.queue.map((q) => q.token === spot.token
+    ? { ...q, status: QUEUE_STATUS.DONE, completedAt: now, updatedAt: now }
+    : q);
+  const barbers = state.barbers.map((b) => b.id === barberId
+    ? { ...b, status: 'free', currentToken: null }
+    : b);
+  saveQueueState({ ...state, queue, barbers });
+  return true;
+}
+
+/** Change barber availability, refusing a break while they have a customer. */
+export function setBarberBreak(barberId, onBreak) {
+  const state = getQueueState();
+  const barber = state.barbers.find((b) => b.id === barberId);
+  if (!barber) return false;
+  if (onBreak && state.queue.some((q) =>
+    (q.barber === barberId || q.assignedBarber === barberId) &&
+    [QUEUE_STATUS.CALLED, QUEUE_STATUS.IN_CHAIR].includes(q.status)
+  )) return false;
+
+  const barbers = state.barbers.map((b) => b.id === barberId
+    ? { ...b, onBreak, status: onBreak ? 'on_break' : 'free' }
+    : b);
+  saveQueueState({ ...state, barbers });
+  return true;
+}
+
 /**
  * Cancel a spot by token
  * Rule: status becomes Cancelled; queue gap closes for everyone behind; emits update event

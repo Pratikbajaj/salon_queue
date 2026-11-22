@@ -140,6 +140,9 @@ export const translations = {
     toggle_resume_btn: "Mark Available",
     barber_status_badge_break: "On Break",
     barber_status_badge_ready: "Available",
+    barber_action_error: "This customer is no longer assigned to you. Refresh and try again.",
+    barber_break_error: "Finish or release the current customer before changing availability.",
+    barber_not_found: "Barber profile not found.",
 
     // Screen 6: Waiting TV
     tv_view_title: "Waiting Area Live Board",
@@ -147,6 +150,9 @@ export const translations = {
     tv_up_next: "Up Next",
     tv_free: "Free",
     tv_chime_alert: "Now calling: {token}",
+    tv_now_token: "Now: {token}",
+    tv_with_customer: "With {name}",
+    tv_no_waiting: "Queue is empty",
 
     // Screen 7: Admin
     admin_title: "Owner Settings",
@@ -304,6 +310,9 @@ export const translations = {
     toggle_resume_btn: "उपलब्ध मार्क करें",
     barber_status_badge_break: "ब्रेक पर",
     barber_status_badge_ready: "उपलब्ध",
+    barber_action_error: "यह ग्राहक अब आपको आवंटित नहीं है। रिफ्रेश करके फिर प्रयास करें।",
+    barber_break_error: "उपलब्धता बदलने से पहले वर्तमान ग्राहक की सेवा पूरी करें या उन्हें रिलीज़ करें।",
+    barber_not_found: "बार्बर प्रोफ़ाइल नहीं मिली।",
 
     // Screen 6: Waiting TV
     tv_view_title: "प्रतीक्षा क्षेत्र लाइव बोर्ड",
@@ -311,6 +320,9 @@ export const translations = {
     tv_up_next: "आगे की बारी",
     tv_free: "खाली",
     tv_chime_alert: "अब बुलाया जा रहा है: {token}",
+    tv_now_token: "अभी: {token}",
+    tv_with_customer: "{name} के साथ",
+    tv_no_waiting: "कतार खाली है",
 
     // Screen 7: Admin
     admin_title: "मालिक सेटिंग्स",

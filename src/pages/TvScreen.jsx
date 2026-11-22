@@ -1,127 +1,168 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Header from '../components/Header';
 import { useTranslation } from '../i18n/LanguageContext';
-import { Sparkles, BellRing } from 'lucide-react';
+import { QUEUE_STATUS, getQueueState, getSpotQueuePosition } from '../rules/queueRules';
+import { BellRing, Scissors, Sparkles } from 'lucide-react';
+
+function playCallChime() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const context = new AudioContextClass();
+    [740, 988].forEach((frequency, index) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const start = context.currentTime + index * 0.16;
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.12, start + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.28);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(start);
+      oscillator.stop(start + 0.3);
+    });
+    window.setTimeout(() => context.close(), 800);
+  } catch {
+    // The visual call alert still works when browser audio is blocked.
+  }
+}
 
 export default function TvScreen() {
   const { t } = useTranslation();
+  const [queueState, setQueueState] = useState(() => getQueueState());
+  const [calledFlash, setCalledFlash] = useState(null);
+  const calledTokensRef = useRef(new Set(
+    queueState.queue.filter((item) => item.status === QUEUE_STATUS.CALLED).map((item) => item.token)
+  ));
+  const flashTimeoutRef = useRef(null);
 
-  const barbers = [
-    { name: 'Ravi', token: 'S-12', customer: 'Aarav', status: 'Now: S-12', isBusy: true },
-    { name: 'Amit', token: 'S-13', customer: 'Rohan', status: 'Now: S-13', isBusy: true, isNew: true },
-    { name: 'Imran', token: null, customer: null, status: t('tv_free'), isBusy: false },
-  ];
+  useEffect(() => {
+    const refresh = () => {
+      const nextState = getQueueState();
+      const calledSpots = nextState.queue.filter((item) => item.status === QUEUE_STATUS.CALLED);
+      const newlyCalled = calledSpots.find((item) => !calledTokensRef.current.has(item.token));
+      calledTokensRef.current = new Set(calledSpots.map((item) => item.token));
+      setQueueState(nextState);
 
-  const upNext = [
-    { token: 'S-14', est: '5 min' },
-    { token: 'S-15', est: '15 min' },
-    { token: 'S-16', est: '25 min' },
-    { token: 'S-17', est: '40 min' },
-    { token: 'S-18', est: '55 min' },
-  ];
+      if (newlyCalled) {
+        setCalledFlash(newlyCalled.token);
+        playCallChime();
+        window.clearTimeout(flashTimeoutRef.current);
+        flashTimeoutRef.current = window.setTimeout(() => setCalledFlash(null), 5000);
+      }
+    };
+
+    window.addEventListener('salon_queue_updated', refresh);
+    window.addEventListener('storage', refresh);
+    const intervalId = window.setInterval(refresh, 3000);
+    return () => {
+      window.removeEventListener('salon_queue_updated', refresh);
+      window.removeEventListener('storage', refresh);
+      window.clearInterval(intervalId);
+      window.clearTimeout(flashTimeoutRef.current);
+    };
+  }, []);
+
+  const activeBarbers = queueState.barbers;
+  const currentByBarber = activeBarbers.map((barber) => ({
+    barber,
+    spot: queueState.queue.find((item) =>
+      item.status === QUEUE_STATUS.IN_CHAIR &&
+      (item.assignedBarber === barber.id || item.barber === barber.id)
+    ),
+  }));
+  const waiting = queueState.queue
+    .filter((item) => item.status === QUEUE_STATUS.WAITING)
+    .sort((a, b) => a.createdAt - b.createdAt)
+    .slice(0, 5)
+    .map((item) => ({ ...item, wait: getSpotQueuePosition(item.token).estimatedWaitMin }));
 
   return (
-    <div className="min-h-screen bg-charcoal-dark flex flex-col select-none">
-      {/* TV Header with prominent brand & language toggle */}
+    <div className="min-h-screen bg-charcoal-dark text-gold-light flex flex-col select-none overflow-hidden">
       <Header title={t('tv_view_title')} showBack={false} />
-
-      <main className="flex-1 p-6 lg:p-10 flex flex-col justify-between max-w-7xl mx-auto w-full gap-8">
-        {/* Top TV Banner */}
+      <main className="flex-1 w-full max-w-[1920px] mx-auto p-5 sm:p-8 lg:p-10 flex flex-col gap-6">
         <div className="flex items-center justify-between border-b border-charcoal-light pb-4">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold uppercase tracking-widest text-gold flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              {t('tv_view_title')}
-            </span>
+          <div className="flex items-center gap-3 text-gold">
+            <Sparkles className="w-6 h-6" />
+            <h1 className="text-lg sm:text-xl font-black uppercase tracking-[0.14em]">{t('tv_now_serving')}</h1>
           </div>
-          <span className="text-xs text-gold-muted font-mono">
-            Screen 6 · 1080p Landscape View (Readable from 5m)
-          </span>
+          <div className="text-xs sm:text-sm text-gold-muted flex items-center gap-2">
+            <Scissors className="w-4 h-4" /> {t('salon_name')}
+          </div>
         </div>
 
-        {/* Main Grid: Barbers (Left) and Up Next Tokens (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">
-          {/* Barbers Floor Section (7 cols) */}
-          <div className="lg:col-span-7 space-y-4">
-            <h2 className="text-sm font-extrabold uppercase tracking-wider text-gold-muted mb-2">
-              {t('tv_now_serving')}
-            </h2>
-
-            <div className="space-y-4">
-              {barbers.map((b) => (
-                <div
-                  key={b.name}
-                  className={`p-6 rounded-3xl border transition-all flex items-center justify-between shadow-2xl ${
-                    b.isNew
-                      ? 'bg-gradient-to-r from-gold/20 via-gold/10 to-charcoal-card border-gold animate-pulse'
-                      : 'bg-charcoal-card border-charcoal-light'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-gold/15 border-2 border-gold/30 flex items-center justify-center text-gold font-black text-2xl">
-                      {b.name[0]}
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-gold-light">{b.name}</h3>
-                      <p className="text-sm text-gold-muted">
-                        {b.isBusy ? `In Chair: ${b.customer}` : t('tv_free')}
-                      </p>
-                    </div>
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 flex-1 min-h-0">
+          <section className="xl:col-span-7 flex flex-col gap-4">
+            {currentByBarber.map(({ barber, spot }) => (
+              <article
+                key={barber.id}
+                className={`flex-1 min-h-[130px] rounded-3xl border p-5 sm:p-7 flex items-center justify-between gap-4 shadow-xl transition-colors ${
+                  calledFlash && spot?.token === calledFlash
+                    ? 'bg-gold/20 border-gold animate-pulse'
+                    : 'bg-charcoal-card border-charcoal-light'
+                }`}
+              >
+                <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+                  <div className="w-14 h-14 sm:w-20 sm:h-20 shrink-0 rounded-2xl bg-gold/15 border-2 border-gold/30 flex items-center justify-center text-gold font-black text-2xl sm:text-4xl">
+                    {barber.name[0]}
                   </div>
-
-                  <div className="text-right">
-                    {b.token ? (
-                      <div className="font-mono text-4xl lg:text-5xl font-black text-gold">
-                        {b.token}
-                      </div>
+                  <div className="min-w-0">
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gold-light truncate">{barber.name}</h2>
+                    {spot ? (
+                      <p className="text-sm sm:text-lg text-gold-muted mt-1 truncate">{t('tv_with_customer', { name: spot.name })}</p>
                     ) : (
-                      <div className="text-xl font-bold text-emerald-400 uppercase tracking-wider">
-                        {t('tv_free')}
-                      </div>
+                      <p className={`text-sm sm:text-lg mt-1 ${barber.onBreak ? 'text-amber-300' : 'text-emerald-300'}`}>
+                        {barber.onBreak ? t('label_on_break') : t('tv_free')}
+                      </p>
                     )}
                   </div>
                 </div>
-              ))}
+                {spot ? (
+                  <div className={`font-mono text-4xl sm:text-6xl lg:text-7xl font-black shrink-0 ${calledFlash === spot.token ? 'text-gold' : 'text-gold-light'}`}>
+                    {t('tv_now_token', { token: spot.token })}
+                  </div>
+                ) : (
+                  <div className={`text-xl sm:text-2xl font-bold uppercase tracking-wider ${barber.onBreak ? 'text-amber-300' : 'text-emerald-300'}`}>
+                    {barber.onBreak ? t('label_on_break') : t('tv_free')}
+                  </div>
+                )}
+              </article>
+            ))}
+          </section>
+
+          <section className="xl:col-span-5 bg-charcoal-card border border-charcoal-light rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col min-h-[320px]">
+            <div className="flex items-center justify-between pb-4 border-b border-charcoal-light">
+              <h2 className="text-lg sm:text-xl font-black uppercase tracking-wider text-gold-muted">{t('tv_up_next')}</h2>
+              <span className="text-xs sm:text-sm text-gold-muted">{t('approx_wait_time')}</span>
             </div>
-          </div>
-
-          {/* Up Next List (5 cols) */}
-          <div className="lg:col-span-5 bg-charcoal-card border border-charcoal-light rounded-3xl p-6 shadow-2xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-charcoal-light">
-                <h2 className="text-sm font-extrabold uppercase tracking-wider text-gold-muted">
-                  {t('tv_up_next')} (5)
-                </h2>
-                <span className="text-xs text-gold-muted">{t('est_time')}</span>
-              </div>
-
-              <div className="divide-y divide-charcoal-light mt-2">
-                {upNext.map((item, idx) => (
-                  <div
-                    key={item.token}
-                    className="py-4 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-gold-muted w-5">#{idx + 1}</span>
-                      <span className="font-mono text-3xl font-black text-gold-light">
-                        {item.token}
-                      </span>
+            {waiting.length ? (
+              <div className="divide-y divide-charcoal-light mt-2 flex-1">
+                {waiting.map((item, index) => (
+                  <div key={item.token} className="py-4 sm:py-5 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <span className="text-sm font-bold text-gold-muted w-6 shrink-0">#{index + 1}</span>
+                      <div className="min-w-0">
+                        <span className="font-mono text-2xl sm:text-3xl font-black text-gold-light">{item.token}</span>
+                        <span className="ml-3 text-sm sm:text-base text-gold-muted truncate">{item.name}</span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-sm font-bold text-gold">~{item.est}</span>
-                    </div>
+                    <span className="text-sm sm:text-lg font-bold text-gold whitespace-nowrap">~{item.wait} {t('min')}</span>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Alert footer */}
-            <div className="mt-4 pt-4 border-t border-charcoal-light flex items-center gap-2 text-xs text-gold">
-              <BellRing className="w-4 h-4 animate-bounce" />
-              <span>{t('tv_chime_alert', { token: 'S-13' })}</span>
-            </div>
-          </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-gold-muted text-lg">{t('tv_no_waiting')}</div>
+            )}
+          </section>
         </div>
+
+        {calledFlash && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gold text-charcoal-dark font-black text-lg sm:text-2xl px-6 sm:px-10 py-4 rounded-2xl shadow-2xl animate-pulse flex items-center gap-3">
+            <BellRing className="w-6 h-6" /> {t('tv_chime_alert', { token: calledFlash })}
+          </div>
+        )}
       </main>
     </div>
   );
