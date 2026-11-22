@@ -31,9 +31,9 @@ export const translations = {
     home_join_button: "Join Queue",
     home_join_closed_notice: "Online joining is currently closed. Walk-ins are still accepted at reception.",
     home_barbers_title: "Barbers on Duty",
-    status_busy: "busy",
-    status_free: "free",
-    status_break: "on break",
+    status_busy: "Busy",
+    status_free: "Available",
+    status_break: "On Break",
     status_off_duty: "off duty",
 
     // Screen 2: Join Queue
@@ -100,7 +100,7 @@ export const translations = {
     btn_call_next: "Call Next",
     btn_noshow: "No-show",
     btn_cancel: "Cancel",
-    waiting_empty: "Queue is empty.",
+    waiting_empty: "No one waiting — walk right in!",
     label_in_chair: "In Chair",
     label_wait_time: "Waiting",
     label_mins: "mins",
@@ -124,10 +124,10 @@ export const translations = {
     btn_no_back: "Go back",
     label_called_at: "Called",
     label_waiting_since: "Waiting",
-    label_on_break: "On break",
-    label_free: "Free",
+    label_on_break: "On Break",
+    label_free: "Available",
     label_serving: "Serving",
-    barber_no_next: "No customers yet",
+    barber_no_next: "No one in your queue yet.",
     barber_on_break_badge: "On break",
 
     // Screen 5: Barber View
@@ -151,11 +151,11 @@ export const translations = {
     tv_view_title: "Waiting Area Live Board",
     tv_now_serving: "Now In Chair",
     tv_up_next: "Up Next",
-    tv_free: "Free",
+    tv_free: "Available",
     tv_chime_alert: "Now calling: {token}",
     tv_now_token: "Now: {token}",
-    tv_with_customer: "With {name}",
-    tv_no_waiting: "Queue is empty",
+    tv_with_customer: "{status} · With {name}",
+    tv_no_waiting: "No one waiting — walk right in!",
 
     // Screen 7: Admin
     admin_title: "Owner Settings",
@@ -217,7 +217,7 @@ export const translations = {
     home_join_closed_notice: "ऑनलाइन कतार अभी बंद है। रिसेप्शन पर वॉक-इन स्वीकार किए जा रहे हैं।",
     home_barbers_title: "ड्यूटी पर बार्बर्स",
     status_busy: "व्यस्त",
-    status_free: "खाली",
+    status_free: "उपलब्ध",
     status_break: "ब्रेक पर",
     status_off_duty: "ड्यूटी पर नहीं",
 
@@ -285,7 +285,7 @@ export const translations = {
     btn_call_next: "अगला बुलाएं",
     btn_noshow: "अनुपस्थित",
     btn_cancel: "रद्द करें",
-    waiting_empty: "कतार खाली है।",
+    waiting_empty: "कोई प्रतीक्षा में नहीं — सीधे अंदर आएं!",
     label_in_chair: "कुर्सी पर",
     label_wait_time: "प्रतीक्षा",
     label_mins: "मिनट",
@@ -310,9 +310,9 @@ export const translations = {
     label_called_at: "बुलाया गया",
     label_waiting_since: "प्रतीक्षारत",
     label_on_break: "ब्रेक पर",
-    label_free: "खाली",
+    label_free: "उपलब्ध",
     label_serving: "सेवा में",
-    barber_no_next: "अभी कोई ग्राहक नहीं",
+    barber_no_next: "आपकी कतार में अभी कोई ग्राहक नहीं है।",
     barber_on_break_badge: "ब्रेक पर",
 
     // Screen 5: Barber View
@@ -336,11 +336,11 @@ export const translations = {
     tv_view_title: "प्रतीक्षा क्षेत्र लाइव बोर्ड",
     tv_now_serving: "अभी सेवा में",
     tv_up_next: "आगे की बारी",
-    tv_free: "खाली",
+    tv_free: "उपलब्ध",
     tv_chime_alert: "अब बुलाया जा रहा है: {token}",
     tv_now_token: "अभी: {token}",
-    tv_with_customer: "{name} के साथ",
-    tv_no_waiting: "कतार खाली है",
+    tv_with_customer: "{status} · {name} के साथ",
+    tv_no_waiting: "कोई प्रतीक्षा में नहीं — सीधे अंदर आएं!",
 
     // Screen 7: Admin
     admin_title: "मालिक सेटिंग्स",

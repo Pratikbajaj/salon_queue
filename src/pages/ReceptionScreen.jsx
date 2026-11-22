@@ -12,6 +12,7 @@ import {
   addWalkIn,
   getWaitingMinutes,
   validatePhone,
+  getBarberDisplayStatus,
 } from '../rules/queueRules';
 import { Plus, Lock, Clock, AlertTriangle, User, X, ChevronDown } from 'lucide-react';
 
@@ -295,13 +296,14 @@ function BarberCard({ barber, queue, onCallNext, t }) {
   // Can call next?
   const canCallNext = barber.onDuty !== false && !barber.onBreak && !inChair && !called;
 
-  // Status label
-  let statusLabel = t('label_free');
-  let statusColor = 'text-emerald-400';
-  if (barber.onDuty === false) { statusLabel = t('admin_off_duty'); statusColor = 'text-gold-muted'; }
-  else if (barber.onBreak) { statusLabel = t('label_on_break'); statusColor = 'text-gold-muted'; }
-  else if (inChair) { statusLabel = t('label_serving'); statusColor = 'text-amber-400'; }
-  else if (called) { statusLabel = t('label_called_at'); statusColor = 'text-sky-400'; }
+  const displayStatus = getBarberDisplayStatus(barber, queue);
+  const statusLabelKey = { busy: 'status_busy', available: 'status_free', on_break: 'status_break' }[displayStatus];
+  const statusLabel = t(statusLabelKey);
+  const statusColor = displayStatus === 'busy'
+    ? 'text-amber-400'
+    : displayStatus === 'available'
+    ? 'text-emerald-400'
+    : 'text-gold-muted';
 
   return (
     <div className={`bg-charcoal-card border rounded-2xl p-4 space-y-3 shadow-md transition ${
@@ -455,7 +457,8 @@ function WaitingRow({ item, barbers, onNoShow, onCancel, t }) {
           <button
             type="button"
             onClick={() => onNoShow(item)}
-            className="min-h-[44px] px-3 py-1.5 bg-charcoal hover:bg-red-500/10 text-red-400 border border-red-500/30 text-xs font-semibold rounded-lg transition whitespace-nowrap"
+            disabled={countdown === null || countdown > 0}
+            className="min-h-[44px] px-3 py-1.5 bg-charcoal hover:bg-red-500/10 text-red-400 border border-red-500/30 text-xs font-semibold rounded-lg transition whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-charcoal"
           >
             {t('btn_noshow')}
           </button>

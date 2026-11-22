@@ -24,12 +24,12 @@ export default function HomeScreen() {
 
   const { waitingCount, estimatedWaitMin, isOpen, barbers } = summary;
 
-  // Status chip badge colors: free = emerald, busy = amber, break = muted
+  // Status chip badge colors: Available = emerald, Busy = amber, On Break = muted
   const getBarberChipClass = (status) => {
     switch (status) {
       case 'busy':
         return 'text-amber-400 border-amber-500/30 bg-amber-500/10';
-      case 'free':
+      case 'available':
         return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
       case 'on_break':
       default:
@@ -107,15 +107,12 @@ export default function HomeScreen() {
                 <div
                   key={b.id || b.name}
                   className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center transition ${getBarberChipClass(
-                    b.status
+                    b.displayStatus
                   )}`}
                 >
                   <span className="text-sm font-bold text-gold-light">{b.name}</span>
                   <span className="text-[11px] capitalize mt-0.5">
-                    {b.onDuty === false && t('status_off_duty')}
-                    {b.onDuty !== false && b.status === 'busy' && t('status_busy')}
-                    {b.onDuty !== false && b.status === 'free' && t('status_free')}
-                    {b.onDuty !== false && b.status === 'on_break' && t('status_break')}
+                    {t({ busy: 'status_busy', available: 'status_free', on_break: 'status_break' }[b.displayStatus])}
                   </span>
                 </div>
               ))}

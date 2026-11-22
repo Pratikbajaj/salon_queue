@@ -9,6 +9,7 @@ import {
   startServiceForBarber,
   completeServiceForBarber,
   setBarberBreak,
+  getBarberDisplayStatus,
 } from '../rules/queueRules';
 import { Play, CheckCircle, Coffee, Lock, Scissors, Clock, UserRound } from 'lucide-react';
 
@@ -39,6 +40,8 @@ export default function BarberScreen() {
     barber?.onDuty !== false &&
     (spot.barber === barberId || (spot.barber === 'any' && !barber?.onBreak))
   );
+  const displayStatus = getBarberDisplayStatus(barber, queueState.queue);
+  const displayStatusKey = { busy: 'status_busy', available: 'status_free', on_break: 'status_break' }[displayStatus];
   const services = (current?.serviceIds || []).map((serviceId) => {
     const service = queueState.services.find((item) => item.id === serviceId);
     return service ? (t(service.key) || service.name) : serviceId;
@@ -143,14 +146,18 @@ export default function BarberScreen() {
             type="button"
             onClick={handleBreakToggle}
             disabled={!barber || barber.onDuty === false || Boolean(current)}
+            aria-label={barber?.onBreak ? t('toggle_resume_btn') : t('toggle_break_btn')}
+            title={barber?.onBreak ? t('toggle_resume_btn') : t('toggle_break_btn')}
             className={`min-h-[48px] px-4 rounded-xl text-sm font-bold border flex items-center gap-2 transition disabled:opacity-40 disabled:cursor-not-allowed ${
-              barber?.onBreak
+              displayStatus === 'busy'
                 ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-                : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                : displayStatus === 'available'
+                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                : 'bg-charcoal text-gold-muted border-charcoal-light'
             }`}
           >
             <Coffee className="w-4 h-4" />
-            {barber?.onDuty === false ? t('admin_off_duty') : barber?.onBreak ? t('toggle_resume_btn') : t('toggle_break_btn')}
+            {t(displayStatusKey)}
           </button>
         </div>
 

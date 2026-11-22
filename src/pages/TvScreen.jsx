@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Header from '../components/Header';
 import { useTranslation } from '../i18n/LanguageContext';
-import { QUEUE_STATUS, getQueueState, getSpotQueuePosition } from '../rules/queueRules';
+import { QUEUE_STATUS, getBarberDisplayStatus, getQueueState, getSpotQueuePosition } from '../rules/queueRules';
 import { BellRing, Scissors, Sparkles } from 'lucide-react';
 
 function playCallChime() {
@@ -68,6 +68,7 @@ export default function TvScreen() {
   const activeBarbers = queueState.barbers;
   const currentByBarber = activeBarbers.map((barber) => ({
     barber,
+    displayStatus: getBarberDisplayStatus(barber, queueState.queue),
     spot: queueState.queue.find((item) =>
       item.status === QUEUE_STATUS.IN_CHAIR &&
       (item.assignedBarber === barber.id || item.barber === barber.id)
@@ -95,7 +96,7 @@ export default function TvScreen() {
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 flex-1 min-h-0">
           <section className="xl:col-span-7 flex flex-col gap-4">
-            {currentByBarber.map(({ barber, spot }) => (
+            {currentByBarber.map(({ barber, spot, displayStatus }) => (
               <article
                 key={barber.id}
                 className={`flex-1 min-h-[130px] rounded-3xl border p-5 sm:p-7 flex items-center justify-between gap-4 shadow-xl transition-colors ${
@@ -110,13 +111,13 @@ export default function TvScreen() {
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gold-light truncate">{barber.name}</h2>
-                    {spot ? (
-                      <p className="text-sm sm:text-lg text-gold-muted mt-1 truncate">{t('tv_with_customer', { name: spot.name })}</p>
-                    ) : (
-                      <p className={`text-sm sm:text-lg mt-1 ${barber.onBreak ? 'text-amber-300' : 'text-emerald-300'}`}>
-                        {barber.onBreak ? t('label_on_break') : t('tv_free')}
-                      </p>
-                    )}
+                    <p className={`text-sm sm:text-lg mt-1 truncate ${
+                      displayStatus === 'busy' ? 'text-amber-300' : displayStatus === 'available' ? 'text-emerald-300' : 'text-gold-muted'
+                    }`}>
+                      {spot
+                        ? t('tv_with_customer', { status: t('status_busy'), name: spot.name })
+                        : t(displayStatus === 'on_break' ? 'status_break' : 'status_free')}
+                    </p>
                   </div>
                 </div>
                 {spot ? (
@@ -124,8 +125,10 @@ export default function TvScreen() {
                     {t('tv_now_token', { token: spot.token })}
                   </div>
                 ) : (
-                  <div className={`text-xl sm:text-2xl font-bold uppercase tracking-wider ${barber.onBreak ? 'text-amber-300' : 'text-emerald-300'}`}>
-                    {barber.onBreak ? t('label_on_break') : t('tv_free')}
+                  <div className={`text-xl sm:text-2xl font-bold uppercase tracking-wider ${
+                    displayStatus === 'on_break' ? 'text-gold-muted' : 'text-emerald-300'
+                  }`}>
+                    {t(displayStatus === 'on_break' ? 'status_break' : 'status_free')}
                   </div>
                 )}
               </article>

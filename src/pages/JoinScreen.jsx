@@ -10,6 +10,7 @@ import {
   findActiveSpotByPhone,
   addCustomerToQueue,
   getActiveBarbersCount,
+  getBarberDisplayStatus,
 } from '../rules/queueRules';
 
 export default function JoinScreen() {
@@ -379,6 +380,13 @@ export default function JoinScreen() {
             {barbers.map((b) => {
               const isSelected = selectedBarberId === b.id;
               const isOffDuty = b.onDuty === false;
+              const barberStatus = getBarberDisplayStatus(b, queueState.queue);
+              const statusLabel = t({ busy: 'status_busy', available: 'status_free', on_break: 'status_break' }[barberStatus]);
+              const statusColor = barberStatus === 'busy'
+                ? 'text-amber-400'
+                : barberStatus === 'available'
+                ? 'text-emerald-400'
+                : 'text-gold-muted';
               return (
                 <button
                   type="button"
@@ -392,18 +400,10 @@ export default function JoinScreen() {
                   }`}
                 >
                   <div className="text-sm font-semibold">{b.name}</div>
-                  {isOffDuty ? (
-                    <span className="text-[10px] text-gold-muted mt-0.5 block">{t('status_off_duty')}</span>
-                  ) : b.onBreak ? (
-                    <div className="flex items-center gap-1 text-[10px] text-amber-400 mt-0.5">
-                      <AlertCircle className="w-3 h-3" />
-                      <span>{t('status_break')}</span>
-                    </div>
-                  ) : (
-                    <span className="text-[10px] text-gold-muted mt-0.5 capitalize block">
-                      {b.status === 'free' ? t('status_free') : t('status_busy')}
-                    </span>
-                  )}
+                  <span className={`text-[10px] mt-0.5 capitalize flex items-center gap-1 ${statusColor}`}>
+                    {barberStatus === 'on_break' && <AlertCircle className="w-3 h-3" />}
+                    {statusLabel}
+                  </span>
                 </button>
               );
             })}

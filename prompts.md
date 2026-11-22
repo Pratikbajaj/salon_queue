@@ -101,6 +101,14 @@ Build Screen 7 (Owner Settings). Turning off a service hides it from Join; closi
 **Result:** worked
 **Notes:** Built the Owner Settings screen (/admin) with the services list (on/off toggles), barbers on duty, the Open/Closed queue switch and today's stats cards (customers served, average wait, no-shows, cancellations). Turning a service off hides it from Join, closing the queue disables the Join button with a clear message, and walk-ins still work from Reception. Staff screens (/reception, /barber/:name, /admin) now ask for a PIN, and a wrong PIN is rejected. [Add anything that didn't work.]
 
+## 7a. Rules and edge cases
+**Prompt:**
+```
+Implement the no-show, cancel and barber-on-break rules from docs/03-flows-rules.md. Add friendly empty states, e.g. 'No one waiting — walk right in!'.
+```
+**Result:** worked
+**Notes:** The agent implemented the no-show, cancel and barber-on-break rules from the flows and rules doc, and added friendly empty states. I tested the flows by hand and they behaved as the rules describe.
+
 ## Fix & iterate prompts
 
 ### Bug 1: Cancel my spot did nothing
@@ -111,3 +119,13 @@ Bug: On /status/:id, I tap [Cancel my spot], the confirmation pop-up appears, an
 **What was wrong:** The pop-up closed but the screen didn't change and the queue stayed the same.
 **Expected:** Cancelled state shown, spot removed from the queue, Home waiting count goes down.
 **Result:** worked. The agent explained the cause: the Cancel button only changed a local state inside the status screen and didn't update the shared queue. It added a cancel function to queueRules.js and updated the status screen. Tested by cancelling a spot and checking the Cancelled state and the Home count.
+
+### Bug 2: Barber status label missing, and "Free" renamed to "Available"
+**Prompt:**
+```
+Change the barber status labels. On every screen where a barber status is shown (Home chips, Join barber picker, Reception barber cards, TV, Barber View), use exactly these three: "Available" when the barber is not on break and has no customer in the chair, "Busy" when a customer is in the chair, and "On Break" when the barber is on break. Replace the old "Free" label with "Available" in English and Hindi. Make sure no barber chip ever shows an empty status (currently Ravi's chip on Home shows no label). Keep green for Available, amber for Busy and the existing muted style for On Break. Don't change layouts or logic. Explain the cause of the missing label first, then list the files you changed.
+```
+**What was wrong:** On Home, Ravi's chip showed only his name with no status, while Amit showed "Free" and Imran showed "On Break". I also wanted "Available" instead of "Free".
+**Expected:** Every barber chip always shows Available, Busy or On Break, in English and Hindi, on all screens.
+**Result:** worked
+**Notes:** [Add the cause the agent gave, e.g. a status value that had no matching label.] I tested by switching Ravi between Available and On break on his Barber View and starting a customer, and the label changed on Home, Reception and the TV.

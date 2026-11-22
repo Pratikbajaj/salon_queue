@@ -150,6 +150,24 @@ export function getActiveBarbersCount(barbers = INITIAL_BARBERS) {
   return barbers.filter((b) => b.onDuty !== false && !b.onBreak).length || 1;
 }
 
+/** Display status is based on break state and actual in-chair assignments. */
+export function getBarberDisplayStatus(barber, queue = []) {
+  if (barber?.onBreak) return 'on_break';
+  if (!barber) return 'available';
+
+  const barberId = String(barber.id || '').toLowerCase();
+  const barberName = String(barber.name || '').toLowerCase();
+  const hasCustomerInChair = queue.some((spot) =>
+    spot.status === QUEUE_STATUS.IN_CHAIR &&
+    [spot.barber, spot.assignedBarber].some((assignment) => {
+      const value = String(assignment || '').toLowerCase();
+      return value === barberId || value === barberName;
+    })
+  );
+
+  return hasCustomerInChair ? 'busy' : 'available';
+}
+
 /** Persist owner changes through the same queue state used by every screen. */
 export function setOnlineQueueOpen(isOpen) {
   const state = getQueueState();
@@ -215,7 +233,10 @@ export function getHomeQueueSummary() {
     waitingCount: waitingCustomers.length,
     estimatedWaitMin: calculateWaitTime(totalMinutesAhead, activeBarbers),
     isOpen: state.isOnlineQueueOpen,
-    barbers: state.barbers,
+    barbers: state.barbers.map((barber) => ({
+      ...barber,
+      displayStatus: getBarberDisplayStatus(barber, state.queue),
+    })),
   };
 }
 
@@ -287,23 +308,31 @@ export function getSpotQueuePosition(token) {
 }
 
 /**
- * Update a spot's status directly (e.g. called, in chair, done, cancelled)
+ * Advance the forward-only service path. Cancellation and no-show use guarded helpers below.
  */
 export function updateSpotStatus(token, newStatus, assignedBarber = null) {
   const state = getQueueState();
   const normalized = (token || '').toUpperCase().trim();
+  const spot = state.queue.find((q) => q.token.toUpperCase() === normalized);
+  const validNext = {
+    [QUEUE_STATUS.WAITING]: [QUEUE_STATUS.CALLED],
+    [QUEUE_STATUS.CALLED]: [QUEUE_STATUS.IN_CHAIR],
+    [QUEUE_STATUS.IN_CHAIR]: [QUEUE_STATUS.DONE],
+  };
+  if (!spot || !validNext[spot.status]?.includes(newStatus)) return false;
 
-  const updatedQueue = state.queue.map((q) => {
-    if (q.token.toUpperCase() === normalized) {
-      return {
+  const now = Date.now();
+  const updatedQueue = state.queue.map((q) => q.token.toUpperCase() === normalized
+    ? {
         ...q,
         status: newStatus,
         barber: assignedBarber || q.barber,
-        updatedAt: Date.now(),
-      };
-    }
-    return q;
-  });
+        ...(newStatus === QUEUE_STATUS.CALLED ? { calledAt: now } : {}),
+        ...(newStatus === QUEUE_STATUS.IN_CHAIR ? { startedAt: now } : {}),
+        ...(newStatus === QUEUE_STATUS.DONE ? { completedAt: now } : {}),
+        updatedAt: now,
+      }
+    : q);
 
   const updatedState = {
     ...state,
@@ -314,13 +343,13 @@ export function updateSpotStatus(token, newStatus, assignedBarber = null) {
   return true;
 }
 
-/** Start a Called customer's service for their assigned barber. */
+/** Start a Called customer's service for their assigned, available barber. */
 export function startServiceForBarber(token, barberId) {
   const state = getQueueState();
   const normalized = (token || '').toUpperCase().trim();
   const spot = state.queue.find((q) => q.token.toUpperCase() === normalized);
   const barber = state.barbers.find((b) => b.id === barberId);
-  if (!spot || !barber || barber.onBreak || spot.status !== QUEUE_STATUS.CALLED) return false;
+  if (!spot || !barber || barber.onBreak || barber.onDuty === false || spot.status !== QUEUE_STATUS.CALLED) return false;
   if ((spot.assignedBarber || spot.barber) !== barberId) return false;
   if (state.queue.some((q) => q.status === QUEUE_STATUS.IN_CHAIR && q.token !== spot.token && (q.barber === barberId || q.assignedBarber === barberId))) return false;
 
@@ -364,24 +393,23 @@ export function setBarberBreak(barberId, onBreak) {
   )) return false;
 
   const barbers = state.barbers.map((b) => b.id === barberId
-    ? { ...b, onBreak, status: onBreak ? 'on_break' : 'free' }
+    ? { ...b, onBreak, status: b.onDuty === false ? 'off_duty' : (onBreak ? 'on_break' : 'free') }
     : b);
   saveQueueState({ ...state, barbers });
   return true;
 }
 
 /**
- * Cancel a spot by token
- * Rule: status becomes Cancelled; queue gap closes for everyone behind; emits update event
+ * Cancel a waiting spot only; called and in-chair customers cannot move backwards.
  */
 export function cancelCustomerSpot(token) {
   const state = getQueueState();
   const normalized = (token || '').toUpperCase().trim();
-  let found = false;
+  const spot = state.queue.find((q) => q.token.toUpperCase() === normalized);
+  if (!spot || spot.status !== QUEUE_STATUS.WAITING) return false;
 
   const updatedQueue = state.queue.map((q) => {
     if (q.token.toUpperCase() === normalized) {
-      found = true;
       return {
         ...q,
         status: QUEUE_STATUS.CANCELLED,
@@ -390,22 +418,6 @@ export function cancelCustomerSpot(token) {
     }
     return q;
   });
-
-  if (!found) {
-    updatedQueue.push({
-      id: 'q_' + Date.now(),
-      token: normalized,
-      name: 'Customer',
-      phone: '',
-      serviceIds: ['s1'],
-      barber: 'any',
-      status: QUEUE_STATUS.CANCELLED,
-      duration: 30,
-      price: 150,
-      createdAt: Date.now(),
-      cancelledAt: Date.now(),
-    });
-  }
 
   const updatedState = {
     ...state,
@@ -487,23 +499,21 @@ export function callNextForBarber(barberId) {
 export function markNoShow(token) {
   const state = getQueueState();
   const normalized = (token || '').toUpperCase().trim();
-  let found = false;
+  const spot = state.queue.find((q) => q.token.toUpperCase() === normalized);
+  const calledAt = spot?.calledAt || spot?.updatedAt;
+  if (!spot || spot.status !== QUEUE_STATUS.CALLED || !calledAt || Date.now() - calledAt < 10 * 60 * 1000) return false;
 
   const updatedQueue = state.queue.map((q) => {
     if (q.token.toUpperCase() === normalized) {
-      found = true;
       return { ...q, status: QUEUE_STATUS.NO_SHOW, noShowAt: Date.now() };
     }
     return q;
   });
 
-  if (!found) return false;
-
   // Free the barber if they were serving this customer
-  const noShowSpot = state.queue.find((q) => q.token.toUpperCase() === normalized);
   const updatedBarbers = state.barbers.map((b) => {
-    if (noShowSpot && (b.id === noShowSpot.barber || b.id === noShowSpot.assignedBarber)) {
-      return { ...b, status: 'free', currentToken: null };
+    if (b.id === spot.barber || b.id === spot.assignedBarber) {
+      return { ...b, status: b.onDuty === false ? 'off_duty' : (b.onBreak ? 'on_break' : 'free'), currentToken: null };
     }
     return b;
   });

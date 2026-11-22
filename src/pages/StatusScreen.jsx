@@ -325,7 +325,7 @@ export default function StatusScreen() {
             </div>
 
             {/* Actions: Cancel my spot */}
-            <div className="space-y-3 pt-2">
+            {status === QUEUE_STATUS.WAITING && <div className="space-y-3 pt-2">
               <button
                 onClick={() => setShowCancelModal(true)}
                 type="button"
@@ -334,7 +334,7 @@ export default function StatusScreen() {
                 <XCircle className="w-4 h-4" />
                 <span>{t('btn_cancel_spot')}</span>
               </button>
-            </div>
+            </div>}
           </>
         )}
 
