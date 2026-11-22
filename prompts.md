@@ -36,11 +36,23 @@ The theme is now defined in tailwind.config.js (charcoal.* for backgrounds and c
 **Result:** worked
 **Notes:** Home page now shows navy background, gold button, green Free and amber Busy. (Add what you checked on the other pages, and anything that still looked off.)
 
----
-
-## Fix & iterate prompts (add each one you use)
+## 2. Home + Join Queue
 **Prompt:**
 ```
-
+Build Screen 1 (Home) and Screen 2 (Join Queue) from docs/02-screens.md with dummy services and 3 barbers (Ravi, Amit, Imran). Validate phone numbers and the 3-service limit. The live summary must update as I select services. Don't touch other screens. List the files you changed.
 ```
-**What was wrong / Expected / Result:**
+**Result:** worked
+**Notes:** Home and Join Queue screens built with dummy services and the 3 barbers. Phone validation, the 3-service limit and the live summary (total time, price, wait) update as I select services. Tested in phone view (iPhone 16 size) and with the Hindi toggle.
+
+---
+
+## Fix & iterate prompts
+
+### Bug 1: Cancel my spot did nothing
+**Prompt:**
+```
+Bug: On /status/:id, I tap [Cancel my spot], the confirmation pop-up appears, and when I click "Yes, cancel my spot" the pop-up closes but nothing changes on the screen. Expected (docs/02-screens.md, Screen 3, and docs/03-flows-rules.md, cancel rules): the spot's status becomes Cancelled, the screen shows the Cancelled final state with a "Join again" option, the customer is removed from the waiting list so everyone behind moves up, and the Reception list and the Home "people waiting" count update. Explain the cause first, then fix it. Don't change other screens.
+```
+**What was wrong:** The pop-up closed but the screen didn't change and the queue stayed the same.
+**Expected:** Cancelled state shown, spot removed from the queue, Home waiting count goes down.
+**Result:** worked. The agent explained the cause: the Cancel button only changed a local state inside the status screen and didn't update the shared queue. It added a cancel function to queueRules.js and updated the status screen. Tested by cancelling a spot and checking the Cancelled state and the Home count.

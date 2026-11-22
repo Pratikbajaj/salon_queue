@@ -1,21 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import { useTranslation } from '../i18n/LanguageContext';
 import { Users, Clock, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { getHomeQueueSummary } from '../rules/queueRules';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
+  const [summary, setSummary] = useState(() => getHomeQueueSummary());
 
-  // Dummy status placeholder per docs/02-screens.md
-  const isOpen = true;
-  const waitingCount = 6;
-  const estimatedWaitMin = 50;
-  const barbers = [
-    { name: 'Ravi', status: 'status_busy', color: 'text-amber-400 border-amber-500/30 bg-amber-500/10' },
-    { name: 'Amit', status: 'status_free', color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' },
-    { name: 'Imran', status: 'status_break', color: 'text-gold-muted border-charcoal-light bg-charcoal' },
-  ];
+  useEffect(() => {
+    const handleUpdate = () => {
+      setSummary(getHomeQueueSummary());
+    };
+
+    window.addEventListener('salon_queue_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('salon_queue_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
+
+  const { waitingCount, estimatedWaitMin, isOpen, barbers } = summary;
+
+  // Status chip badge colors: free = emerald, busy = amber, break = muted
+  const getBarberChipClass = (status) => {
+    switch (status) {
+      case 'busy':
+        return 'text-amber-400 border-amber-500/30 bg-amber-500/10';
+      case 'free':
+        return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
+      case 'on_break':
+      default:
+        return 'text-gold-muted border-charcoal-light bg-charcoal';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-charcoal-dark flex flex-col">
@@ -25,16 +45,24 @@ export default function HomeScreen() {
         <div className="space-y-5">
           {/* Status Badge */}
           <div className="flex items-center justify-between">
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-              isOpen ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`}></span>
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                isOpen
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-red-500/10 text-red-400 border border-red-500/30'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'
+                }`}
+              ></span>
               {isOpen ? t('home_badge_open') : t('home_badge_closed')}
             </span>
             <span className="text-xs text-gold-muted font-mono">Screen 1 · Phone</span>
           </div>
 
-          {/* Hero / Waiting Card */}
+          {/* Live Queue Status Card */}
           <div className="bg-charcoal-card border border-charcoal-light rounded-3xl p-6 shadow-xl relative overflow-hidden">
             <div className="absolute -top-12 -right-12 w-32 h-32 bg-gold/5 rounded-full blur-2xl pointer-events-none"></div>
 
@@ -51,7 +79,7 @@ export default function HomeScreen() {
                 <div className="flex items-center gap-4 text-sm text-gold-light mt-4 pt-4 border-t border-charcoal-light">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-gold" />
-                    <span>{waitingCount} in line</span>
+                    <span>{waitingCount} {t('position_suffix')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gold" />
@@ -77,18 +105,24 @@ export default function HomeScreen() {
             <div className="grid grid-cols-3 gap-2">
               {barbers.map((b) => (
                 <div
-                  key={b.name}
-                  className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center ${b.color}`}
+                  key={b.id || b.name}
+                  className={`p-2.5 rounded-xl border text-center flex flex-col items-center justify-center transition ${getBarberChipClass(
+                    b.status
+                  )}`}
                 >
                   <span className="text-sm font-bold text-gold-light">{b.name}</span>
-                  <span className="text-[11px] capitalize mt-0.5">{t(b.status)}</span>
+                  <span className="text-[11px] capitalize mt-0.5">
+                    {b.status === 'busy' && t('status_busy')}
+                    {b.status === 'free' && t('status_free')}
+                    {b.status === 'on_break' && t('status_break')}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Join Queue CTA button */}
+        {/* Big Gold Button [ Join Queue ] */}
         <div className="mt-8 pt-4">
           {isOpen ? (
             <Link
