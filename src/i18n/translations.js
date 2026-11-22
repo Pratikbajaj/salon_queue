@@ -91,7 +91,7 @@ export const translations = {
 
     // Screen 4: Reception
     reception_title: "Reception Dashboard",
-    btn_add_walkin: "+ Add Walk-in",
+    btn_add_walkin: "Add Walk-in",
     col_barbers: "Barbers on Floor",
     col_waiting_queue: "Waiting List",
     btn_call_next: "Call Next",
@@ -102,6 +102,8 @@ export const translations = {
     label_wait_time: "Waiting",
     label_mins: "mins",
     call_countdown_noshow: "No-show countdown: {timer}",
+    countdown_act_soon: "— act soon",
+    call_flash_notice: "{token} called. Customer notified.",
     pref_barber: "Pref: {barber}",
     long_wait_badge: ">60 min wait",
     walkin_title: "Add Walk-in Customer",
@@ -264,6 +266,8 @@ export const translations = {
     label_wait_time: "प्रतीक्षा",
     label_mins: "मिनट",
     call_countdown_noshow: "अनुपस्थित उलटी गिनती: {timer}",
+    countdown_act_soon: "— जल्दी कार्रवाई करें",
+    call_flash_notice: "{token} को बुलाया गया। ग्राहक को सूचना भेजी गई।",
     pref_barber: "पसंद: {barber}",
     long_wait_badge: ">60 मिनट प्रतीक्षा",
     walkin_title: "वॉक-इन ग्राहक जोड़ें",

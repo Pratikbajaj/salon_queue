@@ -77,7 +77,13 @@ The previous step was cut off when my agent's quota ran out. Audit the current c
 **Result:** worked
 **Notes:** Codex edited two files (src/i18n/translations.js and src/rules/queueRules.js) and said it hadn't run tests. I tested the five items by hand: Confirm creates a new token and opens its status page, position and wait show correctly, the "Start coming" banner appears at 2nd in line, the gold "It's your turn" screen appears when called, and cancel still works.
 
-
+## 4. Reception Dashboard
+**Prompt:**
+```
+Build the Reception Dashboard (Screen 4) for a 10-inch tablet in landscape. Customers who join from a phone must appear automatically. Call next must follow the barber-preference rules in docs/03-flows-rules.md exactly. Then give me 3 scenarios I can try by hand to prove barber preferences are respected.
+```
+**Result:** worked
+**Notes:** Reception screen built with barber cards, waiting list, Call next, No-show, Cancel and Add walk-in. Customers who join on /join appear on /reception automatically. I tried the agent's 3 barber-preference scenarios by hand (Call next for Amit skips a customer who chose Ravi, and so on) and they behaved correctly. I fixed a small UI issue myself: the Add Walk-in button had two "+" signs, so I removed the extra one from the label text.
 
 ## Fix & iterate prompts
 

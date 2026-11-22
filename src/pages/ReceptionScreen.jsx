@@ -350,7 +350,7 @@ function BarberCard({ barber, queue, onCallNext, t }) {
           <p className="text-xs text-gold-muted">
             {current.serviceIds?.map((id) => {
               const svc = SERVICES_LIST.find((s) => s.id === id);
-              return svc ? svc.name : id;
+              return svc ? (t(svc.key) || svc.name) : id;
             }).join(' + ')}
             <span className="ml-1">· {current.duration}m</span>
           </p>
@@ -384,7 +384,7 @@ function WaitingRow({ item, barbers, onNoShow, onCancel, t }) {
   const waitMin = getWaitingMinutes(item.createdAt);
   const isLongWait = waitMin >= 60;
   const barberPref = barbers.find((b) => b.id === item.barber);
-  const prefLabel = barberPref ? barberPref.name : t('any_barber').split(' ')[0]; // "Any"
+  const prefLabel = barberPref ? barberPref.name : t('any_barber');
   const isCalledStatus = item.status === QUEUE_STATUS.CALLED;
 
   // No-show countdown for called row
@@ -417,7 +417,7 @@ function WaitingRow({ item, barbers, onNoShow, onCancel, t }) {
         <div className="flex-shrink-0 text-center">
           <span className="font-mono font-bold text-gold text-base block leading-tight">{item.token}</span>
           {isCalledStatus && (
-            <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">Called</span>
+            <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wide">{t('label_called_at')}</span>
           )}
         </div>
         <div className="min-w-0">
@@ -432,7 +432,7 @@ function WaitingRow({ item, barbers, onNoShow, onCancel, t }) {
           <div className="text-xs text-gold-muted truncate">
             {item.serviceIds?.map((id) => {
               const svc = SERVICES_LIST.find((s) => s.id === id);
-              return svc ? svc.name : id;
+              return svc ? (t(svc.key) || svc.name) : id;
             }).join(' + ')}
             {' · '}
             {t('pref_barber').replace('{barber}', prefLabel)}
@@ -441,7 +441,7 @@ function WaitingRow({ item, barbers, onNoShow, onCancel, t }) {
           </div>
           {isCalledStatus && countdown !== null && (
             <div className={`text-[11px] font-mono font-bold mt-0.5 ${countdown < 120 ? 'text-red-400' : 'text-sky-400'}`}>
-              ⏱ {fmtCountdown(countdown)} {countdown < 120 ? '— act soon' : ''}
+              ⏱ {fmtCountdown(countdown)} {countdown < 120 ? t('countdown_act_soon') : ''}
             </div>
           )}
         </div>
@@ -460,13 +460,6 @@ function WaitingRow({ item, barbers, onNoShow, onCancel, t }) {
         )}
         {item.status === QUEUE_STATUS.WAITING && (
           <>
-            <button
-              type="button"
-              onClick={() => onNoShow(item)}
-              className="min-h-[44px] px-3 py-1.5 bg-charcoal hover:bg-red-500/10 text-red-400 border border-red-500/30 text-xs font-semibold rounded-lg transition"
-            >
-              {t('btn_noshow')}
-            </button>
             <button
               type="button"
               onClick={() => onCancel(item)}
@@ -546,7 +539,7 @@ function ReceptionDashboard() {
       {callFlash && (
         <div className="fixed top-16 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
           <div className="bg-gold text-charcoal-dark font-bold text-sm px-6 py-3 rounded-2xl shadow-xl animate-pulse">
-            🔔 {callFlash} called! Customer's phone is notified.
+            {t('call_flash_notice', { token: callFlash })}
           </div>
         </div>
       )}
@@ -585,26 +578,28 @@ function ReceptionDashboard() {
         </div>
 
         {/* 2-column grid: Barbers (5 cols) | Waiting list (7 cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
 
           {/* ── Left: Barber cards ─────────────────────────────────────────────── */}
-          <div className="lg:col-span-5 space-y-3">
+          <div className="xl:col-span-7 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gold-muted px-1">
               {t('col_barbers')}
             </h3>
-            {barbers.map((b) => (
-              <BarberCard
-                key={b.id}
-                barber={b}
-                queue={queue}
-                onCallNext={handleCallNext}
-                t={t}
-              />
-            ))}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {barbers.map((b) => (
+                <BarberCard
+                  key={b.id}
+                  barber={b}
+                  queue={queue}
+                  onCallNext={handleCallNext}
+                  t={t}
+                />
+              ))}
+            </div>
           </div>
 
           {/* ── Right: Waiting list ────────────────────────────────────────────── */}
-          <div className="lg:col-span-7 space-y-3">
+          <div className="xl:col-span-5 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gold-muted px-1">
               {t('col_waiting_queue')}
               <span className="ml-2 text-gold/70 font-mono normal-case text-[11px]">

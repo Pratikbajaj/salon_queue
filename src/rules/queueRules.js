@@ -315,7 +315,7 @@ export function cancelCustomerSpot(token) {
 export function callNextForBarber(barberId) {
   const state = getQueueState();
   const barber = state.barbers.find((b) => b.id === barberId);
-  if (!barber) return null;
+  if (!barber || barber.onBreak) return null;
 
   // Don't assign if barber already has someone In chair
   const alreadyServing = state.queue.find(
@@ -335,7 +335,7 @@ export function callNextForBarber(barberId) {
   const candidate = state.queue.find((q) => {
     if (q.status !== QUEUE_STATUS.WAITING) return false;
     if (q.barber === barberId) return true;           // specific preference → only this barber
-    if (q.barber === 'any' && !barber.onBreak) return true;  // any → not on break
+    if (q.barber === 'any') return true;
     return false;
   });
 

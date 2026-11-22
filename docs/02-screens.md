@@ -29,7 +29,7 @@ Global: every label comes from the EN/HI language file. Language toggle (EN | à¤
 ## Screen 4: Reception Dashboard (`/reception`) â€” tablet landscape, PIN-protected
 - Left: barber cards in a 3-column row: current customer, time-left progress bar, **[Call next]**.
 - Right: waiting list in order: token, name, services, preferred barber, waiting time, **[No-show]** **[Cancel]**.
-- Top: **[ + Add walk-in ]** opens a quick form (name, phone, services, barber).
+- Top: **[ Add Walk-in ]** opens a quick form (name, phone, services, barber).
 - Waiting > 60 min highlighted amber. "Called" customers show a 10-minute no-show countdown.
 - Empty state: "Queue is empty."
 
