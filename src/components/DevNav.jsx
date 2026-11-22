@@ -12,7 +12,7 @@ export default function DevNav() {
     { name: t('join_title'), path: '/join' },
     { name: t('status_screen_title'), path: '/status' },
     { name: t('reception_title'), path: '/reception' },
-    { name: t('barber_view_title'), path: '/barber/Ravi' },
+    { name: t('barber_view_title'), path: '/barber' },
     { name: t('tv_view_title'), path: '/display' },
     { name: t('admin_title'), path: '/admin' },
   ];

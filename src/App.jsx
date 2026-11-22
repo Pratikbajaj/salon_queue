@@ -31,7 +31,7 @@ export default function App() {
 
             {/* Screen 5: Barber View */}
             <Route path="/barber/:name" element={<BarberScreen />} />
-            <Route path="/barber" element={<Navigate to="/barber/Ravi" replace />} />
+            <Route path="/barber" element={<BarberScreen />} />
 
             {/* Screen 6: Waiting Area TV */}
             <Route path="/display" element={<TvScreen />} />

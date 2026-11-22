@@ -165,6 +165,7 @@ export const translations = {
     barber_action_error: "This customer is no longer assigned to you. Refresh and try again.",
     barber_break_error: "Finish or release the current customer before changing availability.",
     barber_not_found: "Barber profile not found.",
+    barber_none_on_duty: "No barbers are on duty right now.",
 
     // Screen 6: Waiting TV
     tv_view_title: "Waiting Area Live Board",
@@ -371,6 +372,7 @@ export const translations = {
     barber_action_error: "यह ग्राहक अब आपको आवंटित नहीं है। रिफ्रेश करके फिर प्रयास करें।",
     barber_break_error: "उपलब्धता बदलने से पहले वर्तमान ग्राहक की सेवा पूरी करें या उन्हें रिलीज़ करें।",
     barber_not_found: "बार्बर प्रोफ़ाइल नहीं मिली।",
+    barber_none_on_duty: "अभी कोई बार्बर ड्यूटी पर नहीं है।",
 
     // Screen 6: Waiting TV
     tv_view_title: "प्रतीक्षा क्षेत्र लाइव बोर्ड",

@@ -153,3 +153,43 @@ Change the barber status labels. On every screen where a barber status is shown 
 **Expected:** Every barber chip always shows Available, Busy or On Break, in English and Hindi, on all screens.
 **Result:** worked
 **Notes:** I tested by switching Ravi between Available and On break on his Barber View and starting a customer, and the label changed on Home, Reception and the TV.
+
+### Bug 3: Unknown token showed fake data on My Status
+**Prompt:**
+```
+Bug: Opening /status/<token> (or any token that doesn't exist) shows a fake token "<TOKEN>", "6th in line" and "50 min". Expected: a friendly "We couldn't find this spot" message with a [Join Queue] button, and no fake numbers. Explain the cause first, then fix it. Don't change other screens.
+```
+**What was wrong:** I opened the live link with a placeholder address (/status/<token>) and the page showed a fake token and dummy numbers that never updated.
+**Expected:** A "spot not found" message with a Join Queue button and no fake data.
+**Result:** worked
+**Notes:** [Add the cause the agent gave, e.g. the page fell back to demo values when the token wasn't found.] I tested by opening a made-up token and a real one, and the made-up one now shows the not-found message.
+
+### Bug 4: My Status always opened a cancelled spot (S-14)
+**Prompt:**
+```
+Bug: After I join the queue, going back to My Status (via the Screens menu or any My Status link) always opens /status/S-14, a cancelled demo spot, instead of my own active spot. Expected (docs/02-screens.md and docs/03-flows-rules.md): after joining, the app remembers my current active token for this browser, Home shows a "View my status" option that opens my token's status page, the My Status link opens that token, and a cancelled, finished or missing spot is cleared so it doesn't reappear. If I have no active spot, show a friendly message with a [Join Queue] button. Explain the cause first, then fix it. Don't change other screens.
+```
+**What was wrong:** After joining, every way back to My Status led to the old cancelled token S-14, not my own spot.
+**Expected:** The app remembers my current token, Home offers "View my status", and a cancelled or finished spot doesn't reappear.
+**Result:** worked
+**Notes:** I tested by joining as a new customer, going to Home and back to My Status, and it opened my real token.
+
+### Bug 5: Barber View showed only one barber at a time
+**Prompt:**
+```
+Change the Barber View to show all barbers in a single view. Expected (docs/02-screens.md, Screen 5, updated): /barber shows one card per barber on duty (Ravi, Amit, Imran) at the same time, stacked on phone and in a row on tablet. Each card shows the barber's name and status (Available, Busy or On Break), the current customer (name, services, timer since start), [Start] then [Done] buttons, "Next for you", and an On break / Available toggle. /barber/:name should open the same view, with that barber's card highlighted. The Screens menu should link to /barber. Keep the PIN protection and the existing queue rules unchanged. Don't change other screens. Explain your layout in 2 lines and list the files you changed.
+```
+**What was wrong:** The Barber View only opened one barber at a time (/barber/Ravi). The Screens menu linked only to Ravi, and /barber without a name went back to Home, so I could only see Amit and Imran by typing their names.
+**Expected:** One view showing all barbers together, each with their own current customer, Start/Done buttons and On break toggle.
+**Result:** worked
+**Notes:** I updated Screen 5 in docs/02-screens.md first, then prompted. [Add the layout the agent described.] I tested by opening /barber and checking that all three barbers show at once, that Start and Done on one card don't affect the others, and that /barber/Amit still works.
+
+### Bug 6: Barber stuck as Busy with a customer who was no longer assigned
+**Prompt:**
+```
+Bug: On /barber, Amit's card shows S-16 in the chair with a timer of 176:47, and tapping Finish (Done) shows "This customer is no longer assigned to you. Refresh and try again." The barber stays stuck as Busy permanently. Expected (docs/03-flows-rules.md): a barber can always finish or release their chair. If the customer in the chair no longer exists, is cancelled or is assigned elsewhere, Done should clear the chair and set the barber to Available instead of showing an error, and the queue should heal itself on load (no barber should hold a customer that isn't In chair for that barber). Explain the cause first, then fix it. Don't change other screens.
+```
+**What was wrong:** Amit's card was stuck on a customer (S-16) with a timer of about 3 hours, and Finish (Done) only showed an error, so the barber could never be freed.
+**Expected:** Done always releases the chair and sets the barber to Available, and the queue repairs inconsistent data on load.
+**Result:** worked
+**Notes:** [Add the cause the agent gave, e.g. the barber's chair still pointed to a customer whose status had changed, and there was no check or repair.] I tested by [what you did, e.g. clearing the old test data and repeating Call next, Start and Done for Amit], and the barber returned to Available.
