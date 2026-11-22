@@ -2,7 +2,7 @@
 
 Log every prompt in the order you actually used it, including the ones that failed.
 
-Tool used: Google Antigravity
+Tool used: Google Antigravity (Steps 1–3, until quota ran out), then OpenAI Codex
 
 ---
 
@@ -52,7 +52,32 @@ I want to host this app on Vercel (frontend) and, if we have a backend, Render. 
 **Result:** worked
 **Notes:** Verified 0 localhost URLs in codebase, build command `npm run build` generates `dist/` cleanly, added `vercel.json` SPA rewrite rule to prevent 404s on deep links, created `.env.example`, and provided step-by-step Vercel and Render deployment instructions.
 
----
+## 3. My Status (Antigravity)
+**Prompt:**
+```
+After Confirm, give a token (S-1, S-2…) and open My Status (Screen 3). Show position and estimated wait using the rule in docs/03-flows-rules.md. Add the 'Start coming' and 'It's your turn' states. Don't touch other screens.
+```
+**Result:** partly
+**Notes:** The agent stopped in the middle of the task because my Antigravity quota ran out, so I couldn't tell how much of Step 3 was finished.
+
+## 3b. My Status (same prompt, Codex)
+**Why:** I switched to Codex after my Antigravity quota ran out.
+**Prompt:**
+```
+After Confirm, give a token (S-1, S-2…) and open My Status (Screen 3). Show position and estimated wait using the rule in docs/03-flows-rules.md. Add the 'Start coming' and 'It's your turn' states. Don't touch other screens.
+```
+**Result:** partly
+**Notes:** Codex continued the work, but I wasn't sure what was finished and what wasn't, so I asked it to audit the code against the request in 3c.
+
+## 3c. Audit and finish Step 3 (Codex)
+**Prompt:**
+```
+The previous step was cut off when my agent's quota ran out. Audit the current code against this Step 3 request and finish only what is missing: "After Confirm, give a token (S-1, S-2…) and open My Status (Screen 3). Show position and estimated wait using the rule in docs/03-flows-rules.md. Add the 'Start coming' and 'It's your turn' states. Don't touch other screens." First list what is already done and what is missing for each of these: (1) Confirm on Join creates a new token S-1, S-2… and opens /status/:id for that token; (2) My Status shows the correct position and estimated wait from the queue rules in queueRules.js; (3) at 2nd in line, the banner "Start coming to the salon" shows; (4) when called, the full-screen gold "It's your turn! Go to <barber>" shows; (5) cancel still works. Then implement only the missing parts, reuse the existing queue rules module, and don't touch other screens. List the files you changed and give me a short manual test for each of the five items.
+```
+**Result:** worked
+**Notes:** Codex edited two files (src/i18n/translations.js and src/rules/queueRules.js) and said it hadn't run tests. I tested the five items by hand: Confirm creates a new token and opens its status page, position and wait show correctly, the "Start coming" banner appears at 2nd in line, the gold "It's your turn" screen appears when called, and cancel still works.
+
+
 
 ## Fix & iterate prompts
 

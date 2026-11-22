@@ -11,22 +11,27 @@ import {
   AlertCircle,
   RotateCcw,
   Sparkles,
+  SlidersHorizontal,
 } from 'lucide-react';
 import {
   getSpotQueuePosition,
   cancelCustomerSpot,
+  updateSpotStatus,
+  formatOrdinal,
   QUEUE_STATUS,
 } from '../rules/queueRules';
 
 export default function StatusScreen() {
   const { id } = useParams();
   const token = (id || 'S-14').toUpperCase();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const [spotInfo, setSpotInfo] = useState(() => getSpotQueuePosition(token));
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDevControls, setShowDevControls] = useState(false);
+  const [simulatedState, setSimulatedState] = useState(null);
 
-  // Sync with queue updates across windows/tabs
+  // Sync with queue updates across windows/tabs + auto-refresh countdown
   useEffect(() => {
     const handleUpdate = () => {
       setSpotInfo(getSpotQueuePosition(token));
@@ -34,11 +39,19 @@ export default function StatusScreen() {
 
     window.addEventListener('salon_queue_updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
+
+    // Auto-refresh interval (every 4 seconds)
+    const interval = setInterval(handleUpdate, 4000);
+
     return () => {
       window.removeEventListener('salon_queue_updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
+      clearInterval(interval);
     };
   }, [token]);
+
+  // Merge live spot info with any active simulation state
+  const effectiveInfo = simulatedState ? { ...spotInfo, ...simulatedState } : spotInfo;
 
   const {
     position,
@@ -46,20 +59,93 @@ export default function StatusScreen() {
     status,
     assignedBarber,
     barberOnBreak,
-  } = spotInfo;
+  } = effectiveInfo;
+
+  // Trigger phone vibration when Called
+  useEffect(() => {
+    if (status === QUEUE_STATUS.CALLED) {
+      if ('vibrate' in navigator) {
+        try {
+          navigator.vibrate([300, 150, 300, 150, 400]);
+        } catch (e) {
+          // Vibration not supported or allowed
+        }
+      }
+    }
+  }, [status]);
 
   // Handle spot cancellation
   const handleConfirmCancel = () => {
     cancelCustomerSpot(token);
+    setSimulatedState(null);
     setSpotInfo(getSpotQueuePosition(token));
     setShowCancelModal(false);
+  };
+
+  // Simulation state helpers for manual test verification
+  const handleSimulate = (stateOverrides) => {
+    setSimulatedState(stateOverrides);
+    if (stateOverrides && stateOverrides.status) {
+      updateSpotStatus(token, stateOverrides.status, stateOverrides.assignedBarber || assignedBarber);
+    }
   };
 
   return (
     <div className="min-h-screen bg-charcoal-dark flex flex-col">
       <Header title={t('status_screen_title')} showBack={true} backTo="/" />
 
-      <main className="flex-1 max-w-md w-full mx-auto px-4 py-6 space-y-6">
+      {/* ================= FULL-SCREEN GOLD "IT'S YOUR TURN" STATE ================= */}
+      {status === QUEUE_STATUS.CALLED && (
+        <div className="fixed inset-0 z-50 bg-gold text-charcoal-dark flex flex-col items-center justify-between p-6 sm:p-10 animate-pulse select-none">
+          {/* Header */}
+          <div className="w-full flex justify-between items-center text-charcoal-dark font-bold text-xs uppercase tracking-wider">
+            <span>{t('salon_name')}</span>
+            <span className="bg-charcoal-dark/15 px-3 py-1 rounded-full font-mono text-sm">
+              {token}
+            </span>
+          </div>
+
+          {/* Central Callout */}
+          <div className="text-center space-y-6 my-auto max-w-sm">
+            <div className="w-24 h-24 rounded-full bg-charcoal-dark/10 border-4 border-charcoal-dark/20 flex items-center justify-center mx-auto text-charcoal-dark shadow-2xl">
+              <Sparkles className="w-12 h-12" />
+            </div>
+
+            <div className="space-y-3">
+              <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight">
+                {t('turn_alert_title')}
+              </h1>
+              <p className="text-xl sm:text-2xl font-extrabold text-charcoal-dark/95">
+                {t('turn_alert_desc', { barber: assignedBarber || 'Ravi' })}
+              </p>
+            </div>
+
+            <div className="p-4 bg-charcoal-dark/10 rounded-2xl text-sm font-semibold">
+              <p>{t('turn_alert_instruction')}</p>
+              <p className="text-xs text-charcoal-dark/70 mt-1">{t('turn_alert_ready')}</p>
+            </div>
+          </div>
+
+          {/* Bottom Acknowledgment & Test Buttons */}
+          <div className="w-full max-w-sm space-y-3">
+            <button
+              onClick={() => handleSimulate({ status: QUEUE_STATUS.IN_CHAIR, position: 0 })}
+              className="w-full min-h-[48px] px-6 py-3 bg-charcoal-dark text-gold font-bold text-sm rounded-xl hover:bg-charcoal transition shadow-xl cursor-pointer"
+            >
+              I'm Here — Take My Seat
+            </button>
+            <button
+              onClick={() => handleSimulate(null)}
+              className="w-full text-xs text-charcoal-dark/70 underline py-1 hover:text-charcoal-dark cursor-pointer"
+            >
+              Back to Status Overview
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <main className="flex-1 max-w-md w-full mx-auto px-4 py-6 pb-28 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gold-light">{t('status_screen_title')}</h2>
           <span className="text-xs text-gold-muted font-mono">Screen 3 · Phone</span>
@@ -93,7 +179,7 @@ export default function StatusScreen() {
             <div className="pt-3 border-t border-charcoal-light">
               <Link
                 to="/join"
-                className="w-full min-h-[48px] px-5 py-3 bg-gold hover:bg-gold-dark text-charcoal-dark font-bold text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2"
+                className="w-full min-h-[48px] px-5 py-3 bg-gold hover:bg-gold-dark text-charcoal-dark font-bold text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>{t('btn_join_again')}</span>
@@ -130,7 +216,7 @@ export default function StatusScreen() {
             <div className="pt-3 border-t border-charcoal-light">
               <Link
                 to="/join"
-                className="w-full min-h-[48px] px-5 py-3 bg-gold hover:bg-gold-dark text-charcoal-dark font-bold text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2"
+                className="w-full min-h-[48px] px-5 py-3 bg-gold hover:bg-gold-dark text-charcoal-dark font-bold text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>{t('btn_join_again')}</span>
@@ -167,7 +253,7 @@ export default function StatusScreen() {
             <div className="pt-3 border-t border-charcoal-light">
               <Link
                 to="/join"
-                className="w-full min-h-[48px] px-5 py-3 bg-gold hover:bg-gold-dark text-charcoal-dark font-bold text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2"
+                className="w-full min-h-[48px] px-5 py-3 bg-gold hover:bg-gold-dark text-charcoal-dark font-bold text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>{t('btn_join_again')}</span>
@@ -176,25 +262,19 @@ export default function StatusScreen() {
           </div>
         )}
 
-        {/* ================= ACTIVE STATE: WAITING OR CALLED ================= */}
-        {(status === QUEUE_STATUS.WAITING || status === QUEUE_STATUS.CALLED || status === QUEUE_STATUS.IN_CHAIR) && (
+        {/* ================= ACTIVE STATE: WAITING OR IN CHAIR ================= */}
+        {(status === QUEUE_STATUS.WAITING || status === QUEUE_STATUS.IN_CHAIR) && (
           <>
             {/* 2nd in line Alert Banner */}
             {position === 2 && status === QUEUE_STATUS.WAITING && (
-              <div className="bg-gold/10 border border-gold/40 p-4 rounded-2xl flex items-center gap-3 animate-pulse">
-                <UserCheck className="w-6 h-6 text-gold shrink-0" />
-                <div>
-                  <p className="text-sm font-bold text-gold">{t('banner_start_coming')}</p>
-                  <p className="text-xs text-gold-light">You are next after the current customer.</p>
+              <div className="bg-gold/15 border-2 border-gold p-4 rounded-2xl flex items-center gap-3.5 shadow-lg animate-pulse">
+                <div className="w-10 h-10 rounded-xl bg-gold text-charcoal-dark flex items-center justify-center shrink-0">
+                  <UserCheck className="w-6 h-6 stroke-[2.5]" />
                 </div>
-              </div>
-            )}
-
-            {/* When Called: Alert card */}
-            {status === QUEUE_STATUS.CALLED && (
-              <div className="bg-gold text-charcoal-dark p-6 rounded-3xl shadow-2xl text-center space-y-2 animate-bounce">
-                <h3 className="text-2xl font-black">{t('turn_alert_title')}</h3>
-                <p className="text-base font-semibold">{t('turn_alert_desc', { barber: assignedBarber })}</p>
+                <div>
+                  <p className="text-base font-extrabold text-gold">{t('banner_start_coming')}</p>
+                  <p className="text-xs text-gold-light">{t('start_coming_desc')}</p>
+                </div>
               </div>
             )}
 
@@ -215,12 +295,13 @@ export default function StatusScreen() {
                 {token}
               </div>
 
+              {/* Position Pill with Ordinal Suffix */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-charcoal border border-charcoal-light text-sm font-semibold text-gold-light">
-                <span>{position}</span>
+                <span>{formatOrdinal(position, language)}</span>
                 <span>{t('position_suffix')}</span>
               </div>
 
-              {/* Circular/Countdown representation */}
+              {/* Circular Countdown representation */}
               <div className="py-4 flex flex-col items-center justify-center">
                 <div className="w-32 h-32 rounded-full border-4 border-gold/20 border-t-gold flex flex-col items-center justify-center">
                   <span className="text-2xl font-black text-gold-light">{estimatedWaitMin}</span>
@@ -234,9 +315,11 @@ export default function StatusScreen() {
 
               <div className="text-xs text-gold-muted pt-2 border-t border-charcoal-light">
                 {status === QUEUE_STATUS.IN_CHAIR ? (
-                  <span className="text-emerald-400 font-semibold">Currently In Chair with {assignedBarber}</span>
+                  <span className="text-emerald-400 font-semibold">
+                    {t('status_in_chair_with', { barber: assignedBarber })}
+                  </span>
                 ) : (
-                  <span>Refreshes automatically as customers move forward</span>
+                  <span>{t('status_auto_refresh')}</span>
                 )}
               </div>
             </div>
@@ -285,6 +368,63 @@ export default function StatusScreen() {
             </div>
           </div>
         )}
+
+        {/* Interactive Testing Toolbar (For manual verification) */}
+        <div className="pt-4 border-t border-charcoal-light/50">
+          <button
+            onClick={() => setShowDevControls(!showDevControls)}
+            className="flex items-center gap-1.5 text-[11px] text-gold-muted hover:text-gold transition mx-auto cursor-pointer"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>{showDevControls ? 'Hide Test Simulation Bar' : 'Test States & Triggers (Demo)'}</span>
+          </button>
+
+          {showDevControls && (
+            <div className="mt-3 p-3 bg-charcoal-card border border-charcoal-light rounded-2xl space-y-2 text-xs">
+              <span className="text-[10px] uppercase font-bold text-gold-muted block">
+                Simulate Spot Trigger:
+              </span>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => handleSimulate({ status: QUEUE_STATUS.WAITING, position: 6, estimatedWaitMin: 50 })}
+                  className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-gold-light text-left"
+                >
+                  6th in line (Default)
+                </button>
+                <button
+                  onClick={() => handleSimulate({ status: QUEUE_STATUS.WAITING, position: 2, estimatedWaitMin: 15 })}
+                  className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-gold-light text-left"
+                >
+                  2nd in line (Start coming)
+                </button>
+                <button
+                  onClick={() => handleSimulate({ status: QUEUE_STATUS.CALLED, position: 1, estimatedWaitMin: 0, assignedBarber: 'Amit' })}
+                  className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-gold font-bold text-left"
+                >
+                  Called (It's your turn!)
+                </button>
+                <button
+                  onClick={() => handleSimulate({ status: QUEUE_STATUS.IN_CHAIR, position: 0, estimatedWaitMin: 0 })}
+                  className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-emerald-400 text-left"
+                >
+                  In Chair
+                </button>
+                <button
+                  onClick={() => handleSimulate({ status: QUEUE_STATUS.DONE })}
+                  className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-emerald-400 text-left"
+                >
+                  Done (Final state)
+                </button>
+                <button
+                  onClick={() => handleSimulate({ status: QUEUE_STATUS.CANCELLED })}
+                  className="p-2 bg-charcoal border border-charcoal-light rounded-lg hover:border-gold text-red-400 text-left"
+                >
+                  Cancelled (Final state)
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
