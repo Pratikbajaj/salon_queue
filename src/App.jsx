@@ -24,7 +24,7 @@ export default function App() {
 
             {/* Screen 3: My Status */}
             <Route path="/status/:id" element={<StatusScreen />} />
-            <Route path="/status" element={<Navigate to="/status/S-14" replace />} />
+            <Route path="/status" element={<StatusScreen />} />
 
             {/* Screen 4: Reception Dashboard */}
             <Route path="/reception" element={<ReceptionScreen />} />

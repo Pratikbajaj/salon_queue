@@ -11,6 +11,7 @@ import {
   addCustomerToQueue,
   getActiveBarbersCount,
   getBarberDisplayStatus,
+  setActiveSpotToken,
 } from '../rules/queueRules';
 
 export default function JoinScreen() {
@@ -172,6 +173,7 @@ export default function JoinScreen() {
     // Check if phone number already has an active spot in queue
     const existingSpot = findActiveSpotByPhone(phone);
     if (existingSpot) {
+      setActiveSpotToken(existingSpot.token);
       setActiveSpotNotice(t('active_spot_redirect', { token: existingSpot.token }));
       setTimeout(() => {
         navigate(`/status/${existingSpot.token}`);
@@ -188,6 +190,7 @@ export default function JoinScreen() {
     });
 
     if (result.success) {
+      setActiveSpotToken(result.spot.token);
       navigate(`/status/${result.spot.token}`);
     }
   };

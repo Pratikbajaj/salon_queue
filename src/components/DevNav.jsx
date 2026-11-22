@@ -10,7 +10,7 @@ export default function DevNav() {
   const screens = [
     { name: t('home_title'), path: '/' },
     { name: t('join_title'), path: '/join' },
-    { name: t('status_screen_title'), path: '/status/S-14' },
+    { name: t('status_screen_title'), path: '/status' },
     { name: t('reception_title'), path: '/reception' },
     { name: t('barber_view_title'), path: '/barber/Ravi' },
     { name: t('tv_view_title'), path: '/display' },

@@ -3,15 +3,17 @@ import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import { useTranslation } from '../i18n/LanguageContext';
 import { Users, Clock, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
-import { getHomeQueueSummary } from '../rules/queueRules';
+import { getActiveSpotToken, getHomeQueueSummary } from '../rules/queueRules';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
   const [summary, setSummary] = useState(() => getHomeQueueSummary());
+  const [activeToken, setActiveToken] = useState(() => getActiveSpotToken());
 
   useEffect(() => {
     const handleUpdate = () => {
       setSummary(getHomeQueueSummary());
+      setActiveToken(getActiveSpotToken());
     };
 
     window.addEventListener('salon_queue_updated', handleUpdate);
@@ -120,7 +122,15 @@ export default function HomeScreen() {
         </div>
 
         {/* Big Gold Button [ Join Queue ] */}
-        <div className="mt-8 pt-4">
+        <div className="mt-8 pt-4 space-y-2">
+          {activeToken && (
+            <Link
+              to={`/status/${encodeURIComponent(activeToken)}`}
+              className="w-full min-h-[48px] px-6 py-3 border border-gold/40 text-gold-light font-bold text-sm rounded-2xl transition flex items-center justify-center"
+            >
+              {t('home_view_status')}
+            </Link>
+          )}
           {isOpen ? (
             <Link
               to="/join"

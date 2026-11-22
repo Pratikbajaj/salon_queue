@@ -115,7 +115,7 @@ Implement the no-show, cancel and barber-on-break rules from docs/03-flows-rules
 Check every screen in Hindi. Fix any text that overflows or isn't translated. Make sure the tap targets are at least 44px on phone screens.
 ```
 **Result:** worked
-**Notes:** The agent went through all 7 screens in Hindi, fixed untranslated labels and text that overflowed, and made buttons and cards at least 44px tall on phone screens. I checked each page in Hindi and in phone view. [Add anything you found still wrong, or anything you fixed by hand.]
+**Notes:** The agent went through all 7 screens in Hindi, fixed untranslated labels and text that overflowed, and made buttons and cards at least 44px tall on phone screens. I checked each page in Hindi and in phone view. 
 
 ## 7c. Verify against the test checklist
 **Prompt:**
@@ -123,7 +123,7 @@ Check every screen in Hindi. Fix any text that overflows or isn't translated. Ma
 Go through the test checklist in docs/03-flows-rules.md. For each item, say pass/fail and how you checked it. Fix failures without changing the design.
 ```
 **Result:** partly
-**Notes:** The agent reported 13 of the 15 items it listed as pass (join totals, 3-service limit, phone validation, duplicate phone, barber preference on Call next, called state within 5 seconds, Start/Done, no-show re-add at the end, cancel, barber on break, close queue with walk-ins allowed, disabling a service, wait time going down) and `npm run build` passed. Two items failed or were unconfirmed: (13) Hindi text overflow, because it couldn't view the rendered screens, and (15) phone, tablet and TV staying in sync on separate devices, because the app uses localStorage, which only syncs windows in the same browser profile. It changed no files. Its checks were done through the queue rules and by reading the code, not by using the rendered screens, so I'm verifying the visual and flow items myself. [Add what you found when you checked Hindi overflow and the PIN item by hand.]
+**Notes:** The agent reported 13 of the 15 items it listed as pass (join totals, 3-service limit, phone validation, duplicate phone, barber preference on Call next, called state within 5 seconds, Start/Done, no-show re-add at the end, cancel, barber on break, close queue with walk-ins allowed, disabling a service, wait time going down) and `npm run build` passed. Two items failed or were unconfirmed: (13) Hindi text overflow, because it couldn't view the rendered screens, and (15) phone, tablet and TV staying in sync on separate devices, because the app uses localStorage, which only syncs windows in the same browser profile. It changed no files. Its checks were done through the queue rules and by reading the code, not by using the rendered screens, so I'm verifying the visual and flow items myself.
 
 ## 8. Deploy & live link
 **Prompt:**
@@ -131,7 +131,7 @@ Go through the test checklist in docs/03-flows-rules.md. For each item, say pass
 Prepare this app for deployment: frontend on Vercel, backend (if any) on Render or Railway. Then put the live link at the very top of README.md in this format: **Live demo:** <url>. List the test PIN for reception/barber screens right below it.
 ```
 **Result:** worked
-**Notes:** The app is a frontend-only React + Vite app hosted on Vercel, with no backend (data is kept in the browser). The agent prepared the project for deployment and put the live link and the staff test PIN at the top of README.md. I checked the live link on my phone and tested the main flow there. [Add anything the agent changed or got wrong, e.g. a vercel.json fix.]
+**Notes:** The app is a frontend-only React + Vite app hosted on Vercel, with no backend (data is kept in the browser). The agent prepared the project for deployment and put the live link and the staff test PIN at the top of README.md. I checked the live link on my phone and tested the main flow there.
 
 ## Fix & iterate prompts
 
@@ -152,4 +152,4 @@ Change the barber status labels. On every screen where a barber status is shown 
 **What was wrong:** On Home, Ravi's chip showed only his name with no status, while Amit showed "Free" and Imran showed "On Break". I also wanted "Available" instead of "Free".
 **Expected:** Every barber chip always shows Available, Busy or On Break, in English and Hindi, on all screens.
 **Result:** worked
-**Notes:** [Add the cause the agent gave, e.g. a status value that had no matching label.] I tested by switching Ravi between Available and On break on his Barber View and starting a customer, and the label changed on Home, Reception and the TV.
+**Notes:** I tested by switching Ravi between Available and On break on his Barber View and starting a customer, and the label changed on Home, Reception and the TV.

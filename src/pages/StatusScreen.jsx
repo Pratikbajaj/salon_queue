@@ -19,11 +19,13 @@ import {
   updateSpotStatus,
   formatOrdinal,
   QUEUE_STATUS,
+  getActiveSpotToken,
+  clearActiveSpotToken,
 } from '../rules/queueRules';
 
 export default function StatusScreen() {
   const { id } = useParams();
-  const token = (id || 'S-14').toUpperCase();
+  const token = (id || getActiveSpotToken() || '').toUpperCase();
   const { t, language } = useTranslation();
 
   const [spotInfo, setSpotInfo] = useState(() => getSpotQueuePosition(token));
@@ -34,9 +36,14 @@ export default function StatusScreen() {
   // Sync with queue updates across windows/tabs + auto-refresh countdown
   useEffect(() => {
     const handleUpdate = () => {
-      setSpotInfo(getSpotQueuePosition(token));
+      const nextInfo = getSpotQueuePosition(token);
+      if (!nextInfo.spot || [QUEUE_STATUS.CANCELLED, QUEUE_STATUS.DONE, QUEUE_STATUS.NO_SHOW].includes(nextInfo.status)) {
+        clearActiveSpotToken(token);
+      }
+      setSpotInfo(nextInfo);
     };
 
+    handleUpdate();
     window.addEventListener('salon_queue_updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
 
@@ -77,6 +84,7 @@ export default function StatusScreen() {
   // Handle spot cancellation
   const handleConfirmCancel = () => {
     cancelCustomerSpot(token);
+    clearActiveSpotToken(token);
     setSimulatedState(null);
     setSpotInfo(getSpotQueuePosition(token));
     setShowCancelModal(false);
@@ -89,6 +97,30 @@ export default function StatusScreen() {
       updateSpotStatus(token, stateOverrides.status, stateOverrides.assignedBarber || assignedBarber);
     }
   };
+
+  if (!spotInfo?.spot) {
+    return (
+      <div className="min-h-screen bg-charcoal-dark flex flex-col">
+        <Header title={t('status_screen_title')} showBack={true} backTo="/" />
+        <main className="flex-1 max-w-md w-full mx-auto px-4 py-8 flex items-center">
+          <section className="w-full bg-charcoal-card border border-charcoal-light rounded-3xl p-6 shadow-xl text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-gold/10 border border-gold/30 text-gold flex items-center justify-center mx-auto">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <h2 className="text-xl font-bold text-gold-light">
+              {token ? t('status_spot_not_found') : t('status_no_active_spot')}
+            </h2>
+            <Link
+              to="/join"
+              className="w-full min-h-[48px] px-5 py-3 bg-gold hover:bg-gold-dark text-charcoal-dark font-bold text-sm rounded-xl shadow-lg transition flex items-center justify-center cursor-pointer"
+            >
+              {t('home_join_button')}
+            </Link>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-charcoal-dark flex flex-col">

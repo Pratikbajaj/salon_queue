@@ -32,6 +32,7 @@ export const translations = {
     home_live_status: "Live Queue Status",
     home_wait_suffix: "wait",
     home_join_button: "Join Queue",
+    home_view_status: "View my status",
     home_join_closed_notice: "Online joining is currently closed. Walk-ins are still accepted at reception.",
     home_barbers_title: "Barbers on Duty",
     status_busy: "Busy",
@@ -70,6 +71,8 @@ export const translations = {
 
     // Screen 3: My Status
     status_screen_title: "My Status",
+    status_spot_not_found: "We couldn't find this spot",
+    status_no_active_spot: "You don't have an active queue spot",
     status_screen_label: "Screen 3 · Phone",
     your_token: "Your Token",
     position_prefix: "Position in queue",
@@ -235,6 +238,7 @@ export const translations = {
     home_live_status: "लाइव कतार स्थिति",
     home_wait_suffix: "प्रतीक्षा",
     home_join_button: "कतार में शामिल हों",
+    home_view_status: "मेरी स्थिति देखें",
     home_join_closed_notice: "ऑनलाइन कतार अभी बंद है। रिसेप्शन पर वॉक-इन स्वीकार किए जा रहे हैं।",
     home_barbers_title: "ड्यूटी पर बार्बर्स",
     status_busy: "व्यस्त",
@@ -273,6 +277,8 @@ export const translations = {
 
     // Screen 3: My Status
     status_screen_title: "मेरी स्थिति",
+    status_spot_not_found: "हमें यह कतार स्थान नहीं मिला",
+    status_no_active_spot: "कतार में आपकी कोई सक्रिय जगह नहीं है",
     status_screen_label: "स्क्रीन 3 · फ़ोन",
     your_token: "आपका टोकन",
     position_prefix: "कतार में स्थान",

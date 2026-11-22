@@ -41,6 +41,38 @@ const INITIAL_QUEUE = [
 ];
 
 const STORAGE_KEY = 'salon_queue_state_v3';
+const ACTIVE_SPOT_TOKEN_KEY = 'salon_active_spot_token';
+
+/** Remember the active customer spot for this browser. */
+export function setActiveSpotToken(token) {
+  if (!token) return;
+  localStorage.setItem(ACTIVE_SPOT_TOKEN_KEY, String(token).toUpperCase());
+}
+
+/** Return this browser's active spot, clearing terminal or missing tokens. */
+export function getActiveSpotToken() {
+  const token = localStorage.getItem(ACTIVE_SPOT_TOKEN_KEY);
+  if (!token) return null;
+
+  const normalized = token.toUpperCase().trim();
+  const spot = getQueueState().queue.find((item) => item.token.toUpperCase() === normalized);
+  const activeStatuses = [QUEUE_STATUS.WAITING, QUEUE_STATUS.CALLED, QUEUE_STATUS.IN_CHAIR];
+  if (!spot || !activeStatuses.includes(spot.status)) {
+    localStorage.removeItem(ACTIVE_SPOT_TOKEN_KEY);
+    return null;
+  }
+
+  return spot.token;
+}
+
+/** Clear the remembered token, optionally only when it matches the supplied token. */
+export function clearActiveSpotToken(token = null) {
+  if (token) {
+    const current = localStorage.getItem(ACTIVE_SPOT_TOKEN_KEY);
+    if (!current || current.toUpperCase() !== String(token).toUpperCase()) return;
+  }
+  localStorage.removeItem(ACTIVE_SPOT_TOKEN_KEY);
+}
 
 /**
  * Get whole state from localStorage or initialize default
@@ -249,14 +281,13 @@ export function getSpotQueuePosition(token) {
   const spot = state.queue.find((q) => q.token.toUpperCase() === normalized);
 
   if (!spot) {
-    // If not found in queue (e.g. testing URL /status/S-14 before join), simulate S-14 waiting
     return {
       spot: null,
-      position: 6,
-      estimatedWaitMin: 50,
+      position: null,
+      estimatedWaitMin: null,
       activeBarbers: getActiveBarbersCount(state.barbers),
-      status: QUEUE_STATUS.WAITING,
-      assignedBarber: 'Amit',
+      status: null,
+      assignedBarber: null,
       barberOnBreak: false,
     };
   }
