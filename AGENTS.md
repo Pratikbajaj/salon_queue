@@ -16,7 +16,7 @@ The live link must be the first line after the title in README.md, with the staf
 ## How to work
 - One screen or one feature per task. Don't touch other screens.
 - Theme: charcoal #1F2937 + gold #D4A017, rounded cards, mobile-first.
-- All labels go through the EN/GU language file; no hard-coded text.
+- All labels go through the EN/HI language file; no hard-coded text.
 - Queue rules live in ONE module in the code; reuse it everywhere.
 - Never add features from the "Don't build" list.
 - Use realistic dummy data (Indian names, ₹ prices) until storage is connected.

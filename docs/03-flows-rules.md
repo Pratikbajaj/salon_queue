@@ -41,7 +41,7 @@ Customer taps Cancel my spot, confirms in the pop-up, and the queue closes the g
 - [ ] Barber on break shows the notice to customers who chose them.
 - [ ] Close online queue: Join button disabled with message; walk-in still works.
 - [ ] Turning a service off hides it from Join.
-- [ ] Language toggle switches all labels to Gujarati with no overflow.
+- [ ] Language toggle switches all labels to Hindi with no overflow.
 - [ ] Waiting time goes down as customers finish.
 - [ ] Phone, tablet and TV windows all stay in sync.
 - [ ] Staff screens reject a wrong PIN.

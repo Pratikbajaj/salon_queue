@@ -16,7 +16,7 @@ On weekends, customers wait 1–2 hours at the salon without knowing when their 
 4. Barber screen: current customer, Start / Done, On break / Available toggle.
 5. Waiting-area TV: who is with which barber, plus the next 5 tokens.
 6. Owner settings: services (time, price, on/off), barbers on duty, open/close online joining, today's stats.
-7. English and Gujarati labels with a language toggle.
+7. English and Hindi labels with a language toggle.
 8. Staff screens protected by a simple PIN.
 
 ## Don't build

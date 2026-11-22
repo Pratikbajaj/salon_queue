@@ -1,6 +1,6 @@
 # Salon Queue — Screens & Features
 
-Global: every label comes from the EN/GU language file. Language toggle (EN | ગુજ) sits top-right on every screen. Tap targets are at least 44px. Theme: charcoal #1F2937 + gold #D4A017.
+Global: every label comes from the EN/HI language file. Language toggle (EN | हिं) sits top-right on every screen. Tap targets are at least 44px. Theme: charcoal #1F2937 + gold #D4A017.
 
 ## Screen 1: Home (`/`) — phone
 - Salon name + logo, badge "Open · Closes 9 PM" (red "Queue closed" when closed).
@@ -47,7 +47,7 @@ Global: every label comes from the EN/GU language file. Language toggle (EN | �
 - Text readable from 5 metres; no buttons.
 
 ## Screen 7: Owner Settings (`/admin`) — tablet/desktop, PIN-protected
-- Services list: name EN/GU, minutes, price, on/off toggle.
+- Services list: name EN/HI, minutes, price, on/off toggle.
 - Barbers on duty today (toggle each).
 - Queue switch: Open / Closed for online joining.
 - Today's stats cards: customers served, average wait, no-shows, cancellations.
