@@ -1,6 +1,6 @@
 # Salon Queue Management System
 
-**Live demo:** https://YOUR-APP.vercel.app
+**Live demo:** https://salon-queue-cyan.vercel.app/
 **Hosted on:** Vercel (frontend) + Render/Railway (backend, if used)
 **Staff test PIN (reception / barber / admin):** 1234
 

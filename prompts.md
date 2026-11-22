@@ -44,6 +44,14 @@ Build Screen 1 (Home) and Screen 2 (Join Queue) from docs/02-screens.md with dum
 **Result:** worked
 **Notes:** Home and Join Queue screens built with dummy services and the 3 barbers. Phone validation, the 3-service limit and the live summary (total time, price, wait) update as I select services. Tested in phone view (iPhone 16 size) and with the Hindi toggle.
 
+## 2b. Deploy early (after step 2)
+**Prompt:**
+```
+I want to host this app on Vercel (frontend) and, if we have a backend, Render. Check the project is ready for deployment: build command, environment variables, no localhost URLs left in the code. Then give me step-by-step deploy instructions for my exact setup.
+```
+**Result:** worked
+**Notes:** Verified 0 localhost URLs in codebase, build command `npm run build` generates `dist/` cleanly, added `vercel.json` SPA rewrite rule to prevent 404s on deep links, created `.env.example`, and provided step-by-step Vercel and Render deployment instructions.
+
 ---
 
 ## Fix & iterate prompts
